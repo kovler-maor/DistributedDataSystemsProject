@@ -1,6 +1,9 @@
+import java.util.ArrayList;
+
 public class ExManager {
     private String path;
-    private num_of_nodes;
+    private int num_of_nodes;
+    private ArrayList<Node> list_of_nodes;
     // your code here
 
     public ExManager(String path){
