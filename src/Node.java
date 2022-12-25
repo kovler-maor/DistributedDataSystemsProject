@@ -6,13 +6,13 @@ public class Node extends Thread {
 
     private int[][] adj_matrix;
 
-    int getId() {return this.id;}
+    int get_node_id() {return this.id;}
 
-    ArrayList<Pair<Integer, int[]>> getNeighbors() {return this.neighbors;}
+    ArrayList<Pair<Integer, int[]>> get_neighbors() {return this.neighbors;}
 
-    int[][] getAdjMatrix() {return this.adj_matrix}
+    int[][] get_adj_matrix() {return this.adj_matrix;}
 
-    void Node
+//    void Node
 
 
 }

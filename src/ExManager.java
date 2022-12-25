@@ -11,7 +11,7 @@ public class ExManager {
         // your code here
     }
 
-    public Node getNode(int id){
+    public Node get_node(int id){
         // your code here
     }
 
