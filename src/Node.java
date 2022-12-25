@@ -5,8 +5,10 @@ import java.util.ArrayList;
  */
 public class Node extends Thread {
     private int id; //The id of the router
-    private ArrayList<Pair<Integer,int[]>> neighbors; /*A list of pairs which contains all the neighbors of the
-    node */
+
+    /*A list of pairs which contains all the neighbors of the node */
+    private ArrayList<Pair<Integer,int[]>> neighbors;
+
     private int[][] adj_matrix; //This is the matrix for the link state routing algorithm
 
     /**
