@@ -1,6 +1,6 @@
 import java.util.*;
 import java.io.*;
-import java.net.*;
+
 public class ExManager {
     private String path;
     private ArrayList<Node> list_of_nodes;
@@ -8,19 +8,26 @@ public class ExManager {
 
     public ExManager(String path) {
         this.path = path;
+        this.list_of_nodes = new ArrayList<Node>();
         // your code here
     }
 
-    public Node get_node(int id) {
-        // your code here
-    }
 
     public int getNum_of_nodes() {
-        return this.num_of_nodes;
+        return this.list_of_nodes.toArray().length;
     }
 
     public void update_edge(int id1, int id2, double weight) {
-        //your code here
+        /**
+         * This method gets two nodes who hava an edge between them,and an edge weight, and updates the weight
+         * @int id1 -> the first node's id
+         * @int id2 -> the second node's id
+         * @double weight -> the new weight
+         */
+        Node first_node = get_node(id1);
+        first_node.update_neighbor_weight(id2, weight);
+        Node second_node = get_node(id2);
+        second_node.update_neighbor_weight(id1, weight);
     }
 
     public void read_txt() throws IOException {
@@ -31,17 +38,30 @@ public class ExManager {
         BufferedReader br = new BufferedReader(fr);
         String line;
         Node node = null;
-        while ((line = br.readLine()) != "stop") {
+        boolean first_round = true;
+        while (true) {
+            line = br.readLine();
+            if(line.equals("stop")){
+                break;
+            }
             String[] words = line.split("\\s+");
-            ArrayList<Integer> nodes_ids = get_nodes_ids();
-            if (!nodes_ids.contains(Integer.parseInt(words[0]))) {
+            if(first_round){
+                first_round = false;
                 node = new Node(Integer.parseInt(words[0]));
-            } else {
-                node = get_node(Integer.parseInt(words[0]));
+                this.list_of_nodes.add(node);
+            }
+            else {
+                ArrayList<Integer> nodes_ids = get_nodes_ids();
+                if (!nodes_ids.contains(Integer.parseInt(words[0]))) {
+                    node = new Node(Integer.parseInt(words[0]));
+                    this.list_of_nodes.add(node);
+                } else {
+                    node = get_node(Integer.parseInt(words[0]));
+                }
             }
             for (int i = 1; i < words.length; i += 4) {
                 int neighbor_id = Integer.parseInt(words[i]);
-                int neighbor_weight = Integer.parseInt(words[i + 1]);
+                double neighbor_weight = Double.parseDouble(words[i + 1]);
                 int neighbor_send_port = Integer.parseInt(words[i + 2]);
                 int neighbor_listen_port = Integer.parseInt(words[i + 3]);
 
@@ -49,9 +69,15 @@ public class ExManager {
             }
         }
     }
+    public void send_to_all_number_of_nodes(){
+        int number_of_nodes = getNum_of_nodes();
+        for(Node node: this.list_of_nodes){
+            node.set_number_of_nodes(number_of_nodes);
+        }
+    }
 
     public void start() {
-        // your code here
+        send_to_all_number_of_nodes();
     }
 
     private ArrayList<Integer> get_nodes_ids() {
@@ -60,7 +86,7 @@ public class ExManager {
          * returns an ArrayList of all the unique IDs of those Nodes.
          * @return ids_list_of_nodes
          */
-        ArrayList<Integer> ids_list_of_nodes = null;
+        ArrayList<Integer> ids_list_of_nodes = new ArrayList<Integer>();
         for (Node node : this.list_of_nodes) {
             ids_list_of_nodes.add(node.get_node_id());
         }
@@ -87,6 +113,7 @@ public class ExManager {
         catch (Exception e){
             e.printStackTrace();
         }
+        return null;
 
     }
 
