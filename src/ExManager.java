@@ -4,14 +4,11 @@ import java.io.*;
 public class ExManager {
     private String path;
     private ArrayList<Node> list_of_nodes;
-    // your code here
 
     public ExManager(String path) {
         this.path = path;
         this.list_of_nodes = new ArrayList<Node>();
-        // your code here
     }
-
 
     public int getNum_of_nodes() {
         return this.list_of_nodes.toArray().length;
@@ -49,8 +46,8 @@ public class ExManager {
                 first_round = false;
                 node = new Node(Integer.parseInt(words[0]));
                 this.list_of_nodes.add(node);
-            }
-            else {
+            } else {
+
                 ArrayList<Integer> nodes_ids = get_nodes_ids();
                 if (!nodes_ids.contains(Integer.parseInt(words[0]))) {
                     node = new Node(Integer.parseInt(words[0]));
@@ -68,6 +65,7 @@ public class ExManager {
                 node.add_neighbor(neighbor_id, neighbor_weight, neighbor_send_port, neighbor_listen_port);
             }
         }
+        System.out.println(getNum_of_nodes());
     }
     public void send_to_all_number_of_nodes(){
         int number_of_nodes = getNum_of_nodes();
@@ -77,6 +75,9 @@ public class ExManager {
     }
 
     public void start() {
+        /**
+         * This function ///////////////////////////////////////
+         */
         send_to_all_number_of_nodes();
     }
 
@@ -93,7 +94,7 @@ public class ExManager {
         return ids_list_of_nodes;
     }
 
-    private Node get_node(Integer id) {
+    public Node get_node(Integer id) {
         /**
          * This function takes the list_of_nodes attribute of the ExManager class and
          * returns a node with the unique ID that been given.

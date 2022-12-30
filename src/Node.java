@@ -1,24 +1,23 @@
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.io.*;
+import java.net.*;
 import java.util.*;
 
-/**
- * This is the Node class which represents a single router in our net work.
- */
 public class Node extends Thread {
+    /**
+     * This is the Node class which represents a single router in our network.
+     */
     private int id; // The id of the router.
     private ArrayList<Pair<Integer, ArrayList<Object>>> neighbors = new ArrayList<>(); // A list of pairs which contains all the neighbors of the node.
     private double[] l_v;// A list which contains this node l_v
-    private ArrayList<Pair<Integer, double[]>> other_l_vs = new ArrayList<>(); // A list of all other nodes l_vs
+    private volatile ArrayList<Pair<Integer, double[]>> other_l_vs = new ArrayList<>(); // A list of all other nodes l_vs
     private double[][] graph_matrix;
-
     private int number_of_nodes;
 
     public Node(int id) {
         this.id = id;
     }
 
-    public void set_number_of_nodes(int number_of_nodes){
+    public void set_number_of_nodes(int number_of_nodes) {
         this.number_of_nodes = number_of_nodes;
     }
 
@@ -62,14 +61,13 @@ public class Node extends Thread {
         return this.id;
     }
 
-    ArrayList<Pair<Integer, ArrayList<Object>>> get_neighbors() {
+    public ArrayList<Pair<Integer, ArrayList<Object>>> get_neighbors() {
         /**
          * This function returns the node's neighbors list
          * @return neighbors
          */
         return this.neighbors;
     }
-
 
     public void build_l_v() {
         /**
@@ -92,23 +90,25 @@ public class Node extends Thread {
         }
         //fill everything with -1
         for (int i = 0; i < this.number_of_nodes; i++) {
-                this.l_v[i] = -1;
-            }
+            this.l_v[i] = -1;
+        }
 
         //fill correct places with propre weights
-        for(int j = 0; j < this.number_of_nodes; j++){
+        for (int j = 0; j < this.number_of_nodes; j++) {
             if (only_ids.contains(j + 1)) {
                 for (ArrayList<Object> neighbor : neighbors_ids_weights) {
                     if ((int) neighbor.get(0) == (j + 1)) {
                         this.l_v[j] = (double) neighbor.get(1);
                     }
                 }
-           }
+            }
         }
     }
-    public void add_lv(Pair<Integer, double[]> l_v){
+
+    public void add_lv(Pair<Integer, double[]> l_v) {
         this.other_l_vs.add(l_v);
     }
+
     public void build_graph_matrix() {
         /**
          * This function builds the graph matrix from all given l_vs
@@ -116,34 +116,137 @@ public class Node extends Thread {
          */
         //fill everything with -1
         for (int i = 0; i < this.number_of_nodes; i++) {
-            for (int j = 0; j < this.number_of_nodes; j++){
+            for (int j = 0; j < this.number_of_nodes; j++) {
                 this.graph_matrix[i][j] = -1;
             }
         }
         //fill correct places with propre weights
-        for(Pair<Integer, double[]> l_v: this.other_l_vs){
+        for (Pair<Integer, double[]> l_v : this.other_l_vs) {
             int row = l_v.getKey() - 1;
-            for(int col = 0; col < this.number_of_nodes; col++){
+            for (int col = 0; col < this.number_of_nodes; col++) {
                 this.graph_matrix[row][col] = l_v.getValue()[col];
             }
         }
     }
+
     @Override
-    public void run(){
-        try {
-            ArrayList<ServerSocket> input_sockets = new ArrayList<>();
-            ArrayList<Socket> output_sockets = new ArrayList<>();
-            for(Pair<Integer, ArrayList<Object>> neighbor: this.neighbors){
-                int input_port = (int) neighbor.getValue().get(2);
-                int output_port = (int) neighbor.getValue().get(1);
-                ServerSocket input_sock = new ServerSocket(input_port);
-                Socket output_sock = new Socket("localhost", output_port);
-                input_sockets.add(input_sock);
-                output_sockets.add(output_sock);
+    public void run() {
+        /**
+         * this function override Thread "run" and implement all of the
+         * link state routing algorithm from the prospective of one node v in graph G
+         */
+
+        // start by build my lv
+        Pair<Integer, double[]> my_lv_massage = new Pair(this.id, this.l_v); //build my massage
+
+        // now start listen to all ports
+        build_all_listen_sockets(my_lv_massage);
+
+        // now we have all the data and can build graph_matrix
+        build_graph_matrix();
+
+        // run Dijkstra algorithm???
+
+        // build routing table???
+    }
+
+    public void build_all_listen_sockets(Pair<Integer, double[]> my_lv_massage){
+        /**
+         * @Pair<Integer, double[]> my_lv_massage
+         * this function will build all my in sockets and listen to all of them
+         * it will stop once my node have gotten all the data he needs
+         * which means stop when the size of "this.other_lvs == (n-1)
+         * the function also sends my_lv, using the "build_sockets_and_send_pair_to_all" function
+         * it needs to be only after a node set up all of his in sockets so that
+         * the code will not get stuck on all node just sending and waiting for connection
+         *** "my_lv_massage" should be send just once in the first iteration
+         */
+
+        // build a list of all the in ports i should listen to
+        ArrayList<Integer> in_ports = new ArrayList<Integer>();
+        for (Pair<Integer, ArrayList<Object>> neighbor : this.neighbors) {
+            in_ports.add((Integer) neighbor.getValue().get(2));
+        }
+
+        boolean first_round = true;
+        while(true){ // run until i have all my data - all 'lvs' of the graph
+
+            // listen to all my in ports
+            for (int port : in_ports) {
+                try {
+
+                    // create new sockets
+                    ServerSocket input_server_socket = new ServerSocket(port);
+
+                    // only if this is the first round we should send our lv to all
+                    if (first_round){
+                        first_round = false;
+                        build_sockets_and_send_pair_to_all(my_lv_massage);
+                    }
+
+                    // start listen to the new in socket
+                    Socket input_socket = input_server_socket.accept();
+
+                    // get the lv from the in socket:
+                    ObjectInputStream in = new ObjectInputStream(input_socket.getInputStream());
+                    Pair<Integer, double[]> response_l_v = (Pair<Integer, double[]>) in.readObject();
+                    ///// add a check to see if this l_v already exist in other lvs
+                    this.other_l_vs.add(response_l_v);
+                    // send response_l_v to all my listeners beside the one who sent response_lv
+                    build_sockets_and_send_pair_to_all(response_l_v);
+
+                    // close the sockets
+                    input_socket.close();
+                    input_server_socket.close();
+
+                } catch (ClassNotFoundException | IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
-        catch (Exception e){
-            e.printStackTrace();
+    }
+
+    public void build_sockets_and_send_pair_to_all(Pair<Integer, double[]> massage){
+        /**
+         * @Pair<Integer,double[]> massage -> the massage i want to send
+         * this function build all of my neighbors out sockets each time i want to send a massage
+         * sends the massage to all and then terminates all sockets
+         */
+
+        // build a list of all the out ports i should send to
+        ArrayList<Integer> out_ports = new ArrayList<Integer>();
+        for (Pair<Integer, ArrayList<Object>> neighbor : this.neighbors) {
+            out_ports.add((Integer) neighbor.getValue().get(1));
+        }
+
+        // send to all my in ports
+        for (int port : out_ports) {
+            try {
+                // create new sockets
+                Socket out_socket = new Socket("localhost", port);
+                ObjectOutputStream out = new ObjectOutputStream(out_socket.getOutputStream());
+
+                // send an object to the server
+                out.writeObject(massage);
+
+                // close the sockets
+                out.close();
+                out_socket.close();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void print_graph(){
+        /**
+         * print the graph matrix
+         */
+        for(int i = 0; i < this.graph_matrix.length ; i++){
+            for(int j = 0; j < this.graph_matrix.length ; j++){
+                System.out.println(graph_matrix[i][j]);
+            }
         }
     }
 
