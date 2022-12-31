@@ -7,9 +7,9 @@ public class Node extends Thread {
      * This is the Node class which represents a single router in our network.
      */
     private int id; // The id of the router.
-    private ArrayList<Pair<Integer, ArrayList<Object>>> neighbors = new ArrayList<>(); // A list of pairs which contains all the neighbors of the node.
+    public ArrayList<Pair<Integer, ArrayList<Object>>> neighbors = new ArrayList<>(); // A list of pairs which contains all the neighbors of the node.
     private double[] l_v;// A list which contains this node l_v
-    private volatile ArrayList<Pair<Integer, double[]>> other_l_vs = new ArrayList<>(); // A list of all other nodes l_vs
+    public volatile ArrayList<Pair<Integer, double[]>> other_l_vs = new ArrayList<>(); // A list of all other nodes l_vs
     private double[][] graph_matrix;
     private int number_of_nodes;
 
@@ -135,22 +135,28 @@ public class Node extends Thread {
          * this function override Thread "run" and implement all of the
          * link state routing algorithm from the prospective of one node v in graph G
          */
-
+        //build lv
+        build_l_v();
         // start by build my lv
         Pair<Integer, double[]> my_lv_massage = new Pair(this.id, this.l_v); //build my massage
 
         // now start listen to all ports
-        build_all_listen_sockets(my_lv_massage);
+        try {
+            build_all_listen_sockets(my_lv_massage);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        // send my lv to all other x in G
+        build_sockets_and_send_pair_to_all(my_lv_massage);
 
         // now we have all the data and can build graph_matrix
         build_graph_matrix();
 
-        // run Dijkstra algorithm???
-
-        // build routing table???
     }
 
-    public void build_all_listen_sockets(Pair<Integer, double[]> my_lv_massage){
+
+    public void build_all_listen_sockets(Pair<Integer, double[]> my_lv_massage) throws IOException {
         /**
          * @Pair<Integer, double[]> my_lv_massage
          * this function will build all my in sockets and listen to all of them
@@ -164,45 +170,34 @@ public class Node extends Thread {
 
         // build a list of all the in ports i should listen to
         ArrayList<Integer> in_ports = new ArrayList<Integer>();
+        ArrayList<ListenSocket> all_listen_sockets = new ArrayList<ListenSocket>();
+
         for (Pair<Integer, ArrayList<Object>> neighbor : this.neighbors) {
             in_ports.add((Integer) neighbor.getValue().get(2));
         }
 
-        boolean first_round = true;
         while(true){ // run until i have all my data - all 'lvs' of the graph
 
             // listen to all my in ports
             for (int port : in_ports) {
                 try {
+                    ListenSocket listen_socket = new ListenSocket(port, this.other_l_vs, this.neighbors);
+                    listen_socket.start();
+                    all_listen_sockets.add(listen_socket);
 
-                    // create new sockets
-                    ServerSocket input_server_socket = new ServerSocket(port);
-
-                    // only if this is the first round we should send our lv to all
-                    if (first_round){
-                        first_round = false;
-                        build_sockets_and_send_pair_to_all(my_lv_massage);
-                    }
-
-                    // start listen to the new in socket
-                    Socket input_socket = input_server_socket.accept();
-
-                    // get the lv from the in socket:
-                    ObjectInputStream in = new ObjectInputStream(input_socket.getInputStream());
-                    Pair<Integer, double[]> response_l_v = (Pair<Integer, double[]>) in.readObject();
-                    ///// add a check to see if this l_v already exist in other lvs
-                    this.other_l_vs.add(response_l_v);
-                    // send response_l_v to all my listeners beside the one who sent response_lv
-                    build_sockets_and_send_pair_to_all(response_l_v);
-
-                    // close the sockets
-                    input_socket.close();
-                    input_server_socket.close();
-
-                } catch (ClassNotFoundException | IOException e) {
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
+            build_sockets_and_send_pair_to_all(my_lv_massage);
+            //check if you have all data(all_lvs)
+            if(this.other_l_vs.size() == (this.number_of_nodes - 1)){
+                break;
+            }
+        }
+        // close all listen sockets
+        for (ListenSocket socket : all_listen_sockets) {
+            socket.close_sockets();
         }
     }
 
@@ -212,7 +207,6 @@ public class Node extends Thread {
          * this function build all of my neighbors out sockets each time i want to send a massage
          * sends the massage to all and then terminates all sockets
          */
-
         // build a list of all the out ports i should send to
         ArrayList<Integer> out_ports = new ArrayList<Integer>();
         for (Pair<Integer, ArrayList<Object>> neighbor : this.neighbors) {
@@ -245,7 +239,12 @@ public class Node extends Thread {
          */
         for(int i = 0; i < this.graph_matrix.length ; i++){
             for(int j = 0; j < this.graph_matrix.length ; j++){
-                System.out.println(graph_matrix[i][j]);
+                if(j == this.graph_matrix.length -1){
+                    System.out.println(graph_matrix[i][j]);
+                }
+                else {
+                    System.out.println(graph_matrix[i][j] + ", ");
+                }
             }
         }
     }

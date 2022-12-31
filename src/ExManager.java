@@ -74,12 +74,22 @@ public class ExManager {
         }
     }
 
+    public void run_all_nodes(){
+        for(Node node: this.list_of_nodes){
+            node.start();
+        }
+    }
+
     public void start() {
         /**
          * This function ///////////////////////////////////////
          */
         send_to_all_number_of_nodes();
+        run_all_nodes();
+
     }
+
+
 
     private ArrayList<Integer> get_nodes_ids() {
         /**
