@@ -1,9 +1,13 @@
 import java.util.*;
 import java.io.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ExManager {
     private String path;
     private ArrayList<Node> list_of_nodes;
+    private static int node_finish_counter = 0;
+
+    private static ReentrantLock lock = new ReentrantLock();
 
     public ExManager(String path) {
         this.path = path;
@@ -62,8 +66,28 @@ public class ExManager {
          */
         // inform nodes of the graph size (they need it to build the graph_matrix attribute)
         send_to_all_number_of_nodes();
+
+        // open all listen ports of every node
+        try {
+            open_all_listen_ports();
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+
         // call the run() function for all the nodes in G
         run_all_nodes();
+
+        // get here only if all nodes have build their graph matrix already
+        int number_of_nodes = getNum_of_nodes();
+        while (true){
+            try {
+                Thread.sleep(5000);
+                if(node_finish_counter == number_of_nodes){break;}
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        terminate();
     }
 
 
@@ -71,6 +95,13 @@ public class ExManager {
         int number_of_nodes = getNum_of_nodes();
         for(Node node: this.list_of_nodes){
             node.set_number_of_nodes(number_of_nodes);
+        }
+    }
+
+
+    public void open_all_listen_ports() throws IOException {
+        for(Node node: this.list_of_nodes){
+            node.build_all_listen_sockets();
         }
     }
 
@@ -137,6 +168,31 @@ public class ExManager {
 
     public int getNum_of_nodes() {
         return this.list_of_nodes.toArray().length;
+    }
+
+
+    public static void increment_node_finish_counter(){
+        lock.lock();
+        try {
+            System.out.println("locked");
+            System.out.println("increment node_finish_counter by 1..");
+            node_finish_counter++;
+        } finally {
+            System.out.println("unlocked");
+            lock.unlock();
+        }
+    }
+
+
+    public void terminate() {
+        for (Node node : this.list_of_nodes) {
+            try {
+                System.out.println("Terminate for node: " + node.get_node_id());
+                node.close_all_listen_sockets();
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+        }
     }
 
 }

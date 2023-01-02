@@ -11,11 +11,15 @@ public class Node extends Thread {
 
     private double[] l_v; // A list which contains this node l_v
 
-    public volatile ArrayList<Pair<Integer, double[]>> other_l_vs = new ArrayList<>(); // A list of all other nodes l_vs and IDs
+    public ArrayList<Pair<Integer, double[]>> other_l_vs = new ArrayList<>(); // A list of all other nodes l_vs and IDs
+
+    public ArrayList<Integer> other_lvs_keys = new ArrayList<>();
 
     private double[][] graph_matrix; // Output of any iteration
 
-    private int number_of_nodes;
+    public int number_of_nodes;
+
+    public ArrayList<ListenSocket> all_listen_sockets = new ArrayList<ListenSocket>();
 
 
     public Node(int id) {
@@ -63,19 +67,11 @@ public class Node extends Thread {
          * link state routing algorithm from the prospective of one node v in graph G
          */
 
-        // lock 1
-
         //build lv
         build_l_v();
+
         // start by build my lv
         Pair<Integer, double[]> my_lv_massage = new Pair(this.id, this.l_v); //build my massage
-
-        // now start listen to all ports
-        try {
-            build_all_listen_sockets(my_lv_massage);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
 
         // send my lv to all other x in G
         build_sockets_and_send_pair_to_all(my_lv_massage);
@@ -83,7 +79,7 @@ public class Node extends Thread {
         // now we have all the data and can build graph_matrix
         build_graph_matrix();
 
-        // unlock 1
+
 
     }
 
@@ -100,7 +96,7 @@ public class Node extends Thread {
         ArrayList<Integer> only_ids = new ArrayList<>();
         for (Pair<Integer, ArrayList<Object>> neighbor : this.neighbors) {
             int id = neighbor.getKey();
-            double weight = neighbor.getKey();
+            double weight = (double) neighbor.getValue().get(0);
             only_ids.add(id);
             ArrayList<Object> neighbor_id_weight = new ArrayList<>();
             neighbor_id_weight.add(id);
@@ -125,7 +121,7 @@ public class Node extends Thread {
     }
 
 
-    public void build_all_listen_sockets(Pair<Integer, double[]> my_lv_massage) throws IOException {
+    public void build_all_listen_sockets() throws IOException {
         /**
          * @Pair<Integer, double[]> my_lv_massage
          * this function will build all my in sockets and listen to all of them
@@ -139,34 +135,22 @@ public class Node extends Thread {
 
         // build a list of all the in ports i should listen to
         ArrayList<Integer> in_ports = new ArrayList<Integer>();
-        ArrayList<ListenSocket> all_listen_sockets = new ArrayList<ListenSocket>();
 
         for (Pair<Integer, ArrayList<Object>> neighbor : this.neighbors) {
             in_ports.add((Integer) neighbor.getValue().get(2));
         }
 
-        while (true) { // run until i have all my data - all 'lvs' of the graph
+        // listen to all my in ports
+        for (int port : in_ports) {
+            try {
+//                System.out.println("Open Socket with listen port: " + port  + " from node: " + this.id);
+                ListenSocket listen_socket = new ListenSocket(port, this.other_l_vs, this.neighbors, this.number_of_nodes, this.other_lvs_keys);
+                listen_socket.start();
+                this.all_listen_sockets.add(listen_socket);
 
-            // listen to all my in ports
-            for (int port : in_ports) {
-                try {
-                    ListenSocket listen_socket = new ListenSocket(port, this.other_l_vs, this.neighbors);
-                    listen_socket.start();
-                    all_listen_sockets.add(listen_socket);
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            build_sockets_and_send_pair_to_all(my_lv_massage);
-            //check if you have all data(all_lvs)
-            if (this.other_l_vs.size() == (this.number_of_nodes - 1)) {
-                break;
-            }
-        }
-        // close all listen sockets
-        for (ListenSocket socket : all_listen_sockets) {
-            socket.close_sockets();
         }
     }
 
@@ -187,13 +171,17 @@ public class Node extends Thread {
         for (int port : out_ports) {
             try {
                 // create new sockets
+//                System.out.println("Open Socket with sending port: " + port + " from node: " + this.id);
                 Socket out_socket = new Socket("localhost", port);
                 ObjectOutputStream out = new ObjectOutputStream(out_socket.getOutputStream());
 
                 // send an object to the server
+//                System.out.println("My Massage on sending port: " + massage + " from node: " + this.id);
                 out.writeObject(massage);
 
                 // close the sockets
+//                System.out.println("Close Socket with sending port: " + port + " from node: " + this.id);
+                out.flush();
                 out.close();
                 out_socket.close();
 
@@ -250,14 +238,23 @@ public class Node extends Thread {
         /**
          * print the graph matrix
          */
+        System.out.println("Graph of node: " + this.id);
         for (int i = 0; i < this.graph_matrix.length; i++) {
             for (int j = 0; j < this.graph_matrix.length; j++) {
                 if (j == this.graph_matrix.length - 1) {
                     System.out.println(graph_matrix[i][j]);
                 } else {
-                    System.out.println(graph_matrix[i][j] + ", ");
+                    System.out.print(graph_matrix[i][j] + ", ");
                 }
             }
+        }
+    }
+
+    public void close_all_listen_sockets() throws IOException {
+        // close all listen sockets
+        for (ListenSocket socket : this.all_listen_sockets) {
+            System.out.println("Close Socket with listen port: " + socket.getListen_port() + " from node: " + this.id);
+            socket.close_sockets();
         }
     }
 
