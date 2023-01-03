@@ -66,8 +66,6 @@ public class Node extends Thread {
          * link state routing algorithm from the prospective of one node v in graph G
          */
 
-        forward_sent_to_listen_sockets();
-
         //build lv
         build_l_v();
 
@@ -182,7 +180,7 @@ public class Node extends Thread {
         // listen to all my in ports
         for (int port : in_ports) {
             try {
-                System.out.println("Open Socket with listen port: " + port  + " from node: " + this.id);
+//                System.out.println("Open Socket with listen port: " + port  + " from node: " + this.id);
                 ListenSocket listen_socket = new ListenSocket(port, this.neighbors, this.number_of_nodes, this.graph_matrix);
                 listen_socket.start();
                 this.all_listen_sockets.add(listen_socket);
@@ -210,11 +208,12 @@ public class Node extends Thread {
 
         // listen to all my in ports
         for (int port : out_ports) {
-            System.out.println("Open with send port Socket: " + port  + " from node: " + this.id);
+//            System.out.println("Open with send port Socket: " + port  + " from node: " + this.id);
             SendSocket send_socket = new SendSocket(port);
             this.all_send_sockets.add(send_socket);
             ExManager.dec_network_is_ready();
         }
+        forward_sent_to_listen_sockets();
     }
 
 
@@ -226,21 +225,16 @@ public class Node extends Thread {
          */
 
         // send to all my in ports
-//        while (true){
-//            Thread.sleep(4000);
-            for (SendSocket send_port : this.all_send_sockets) {
-                try {
-                    // create new sockets
-                    System.out.println("My massage send on port: " + send_port.getSend_port());
-                    send_port.setMassage(massage);
-                    send_port.send();
-                    Thread.sleep(1000); ///////////////
+        for (SendSocket send_port : this.all_send_sockets) {
+            try {
+                // create new sockets
+//                System.out.println("My massage send on port: " + send_port.getSend_port());
+                send_port.send(massage);
 
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-//        }
+        }
     }
 
 
@@ -263,7 +257,7 @@ public class Node extends Thread {
         /**
          * print the graph matrix
          */
-        System.out.println("Graph of node: " + this.id);
+//        System.out.println("Graph of node: " + this.id);
         for (int i = 0; i < this.graph_matrix.length; i++) {
             for (int j = 0; j < this.graph_matrix.length; j++) {
                 if (j == this.graph_matrix.length - 1) {

@@ -7,7 +7,6 @@ import java.util.concurrent.locks.ReentrantLock;
 public class SendSocket extends Thread{
     private final int send_port;
     private Socket s;
-    private Pair<Integer, double[]> massage;
     private static final Lock sent_lock = new ReentrantLock();
 
 
@@ -21,24 +20,19 @@ public class SendSocket extends Thread{
     }
 
 
-
-    public void send(){
+    public void send(Pair<Integer, double[]> massage){
         try {
             sent_lock.lock();
             ObjectOutputStream out = new ObjectOutputStream(this.s.getOutputStream());
             // send an object to the server
-            System.out.println("node with send port: " + this.send_port);
-            out.writeObject(this.massage);
+            out.writeObject(massage);
             out.flush();
+
         } catch (Exception e){
             e.printStackTrace();
         } finally {
             sent_lock.unlock();
         }
-    }
-
-    public void setMassage(Pair<Integer, double[]> massage) {
-        this.massage = massage;
     }
 
     public int getSend_port() {

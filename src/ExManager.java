@@ -1,12 +1,10 @@
 import java.util.*;
 import java.io.*;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class ExManager {
     private String path;
     private ArrayList<Node> list_of_nodes;
-    public static int node_finish_counter = 0;
     public static int network_is_ready;
     private boolean first_round;
     public static CountDownLatch latch;
@@ -89,7 +87,6 @@ public class ExManager {
     }
 
 
-
     public void start() {
         /**
          * This function starting the link state routing algorithm for all the nodes in the the graph
@@ -103,6 +100,7 @@ public class ExManager {
         // get here only if all nodes have build their graph matrix already
         try {
             latch.await(); // main program will wait here until latch count reaches zero
+            terminate(); //??????????
         } catch (Exception e){
             e.printStackTrace();
         }
@@ -209,9 +207,8 @@ public class ExManager {
     }
 
 
-
-
     public void terminate() {
+        // think about it...
     }
 
 }
