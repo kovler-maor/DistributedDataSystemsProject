@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 
 // This is the Node class which represents a single router in our network.
 public class Node extends Thread {
@@ -11,15 +12,13 @@ public class Node extends Thread {
 
     private double[] l_v; // A list which contains this node l_v
 
-    public ArrayList<Pair<Integer, double[]>> other_l_vs = new ArrayList<>(); // A list of all other nodes l_vs and IDs
-
-    public ArrayList<Integer> other_lvs_keys = new ArrayList<>();
-
     private double[][] graph_matrix; // Output of any iteration
 
     public int number_of_nodes;
 
     public ArrayList<ListenSocket> all_listen_sockets = new ArrayList<ListenSocket>();
+
+    public ArrayList<SendSocket> all_send_sockets = new ArrayList<SendSocket>();
 
 
     public Node(int id) {
@@ -67,20 +66,61 @@ public class Node extends Thread {
          * link state routing algorithm from the prospective of one node v in graph G
          */
 
+        forward_sent_to_listen_sockets();
+
         //build lv
         build_l_v();
+
+        // init - add my lv
+        this.graph_matrix[this.id-1] = this.l_v;
 
         // start by build my lv
         Pair<Integer, double[]> my_lv_massage = new Pair(this.id, this.l_v); //build my massage
 
         // send my lv to all other x in G
-        build_sockets_and_send_pair_to_all(my_lv_massage);
+        try {
+            send_pair_to_all(my_lv_massage);
 
-        // now we have all the data and can build graph_matrix
-        build_graph_matrix();
+            // wait until i have my full graph_matrix
+            while (!check_full_matrix()){
+                Thread.sleep(100);
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // now we have all the data and can finish for node n.
+        ExManager.latch.countDown();
 
 
+    }
 
+    public void init_empty_graph_matrix(){
+        this.graph_matrix = new double[this.number_of_nodes][this.number_of_nodes];
+    }
+
+
+    public boolean check_full_matrix(){
+        for (double[] inner_list : this.graph_matrix){
+            if (inner_list[0] == 0.0){
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+    public void all_sockets_ready_to_stop(){
+        for (ListenSocket listen_socket : this.all_listen_sockets) {
+            listen_socket.not_ready_to_stop = false;
+        }
+    }
+
+
+    public void forward_sent_to_listen_sockets(){
+        for (ListenSocket listen_socket : this.all_listen_sockets) {
+            listen_socket.all_send_sockets = this.all_send_sockets;
+        }
     }
 
 
@@ -123,7 +163,6 @@ public class Node extends Thread {
 
     public void build_all_listen_sockets() throws IOException {
         /**
-         * @Pair<Integer, double[]> my_lv_massage
          * this function will build all my in sockets and listen to all of them
          * it will stop once my node have gotten all the data he needs
          * which means stop when the size of "this.other_lvs == (n-1)
@@ -143,10 +182,11 @@ public class Node extends Thread {
         // listen to all my in ports
         for (int port : in_ports) {
             try {
-//                System.out.println("Open Socket with listen port: " + port  + " from node: " + this.id);
-                ListenSocket listen_socket = new ListenSocket(port, this.other_l_vs, this.neighbors, this.number_of_nodes, this.other_lvs_keys);
+                System.out.println("Open Socket with listen port: " + port  + " from node: " + this.id);
+                ListenSocket listen_socket = new ListenSocket(port, this.neighbors, this.number_of_nodes, this.graph_matrix);
                 listen_socket.start();
                 this.all_listen_sockets.add(listen_socket);
+                ExManager.dec_network_is_ready();
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -155,40 +195,52 @@ public class Node extends Thread {
     }
 
 
-    public void build_sockets_and_send_pair_to_all(Pair<Integer, double[]> massage) {
+    public void build_all_send_sockets() throws IOException {
+        /**
+         * @Pair<Integer, double[]> my_lv_massage
+         * this function will build all my out sockets
+         */
+
+        // build a list of all the in ports i should listen to
+        ArrayList<Integer> out_ports = new ArrayList<Integer>();
+
+        for (Pair<Integer, ArrayList<Object>> neighbor : this.neighbors) {
+            out_ports.add((Integer) neighbor.getValue().get(1));
+        }
+
+        // listen to all my in ports
+        for (int port : out_ports) {
+            System.out.println("Open with send port Socket: " + port  + " from node: " + this.id);
+            SendSocket send_socket = new SendSocket(port);
+            this.all_send_sockets.add(send_socket);
+            ExManager.dec_network_is_ready();
+        }
+    }
+
+
+    public void send_pair_to_all(Pair<Integer, double[]> massage) throws InterruptedException {
         /**
          * @Pair<Integer,double[]> massage -> the massage i want to send
          * this function build all of my neighbors out sockets each time i want to send a massage
          * sends the massage to all and then terminates all sockets
          */
-        // build a list of all the out ports i should send to
-        ArrayList<Integer> out_ports = new ArrayList<Integer>();
-        for (Pair<Integer, ArrayList<Object>> neighbor : this.neighbors) {
-            out_ports.add((Integer) neighbor.getValue().get(1));
-        }
 
         // send to all my in ports
-        for (int port : out_ports) {
-            try {
-                // create new sockets
-//                System.out.println("Open Socket with sending port: " + port + " from node: " + this.id);
-                Socket out_socket = new Socket("localhost", port);
-                ObjectOutputStream out = new ObjectOutputStream(out_socket.getOutputStream());
+//        while (true){
+//            Thread.sleep(4000);
+            for (SendSocket send_port : this.all_send_sockets) {
+                try {
+                    // create new sockets
+                    System.out.println("My massage send on port: " + send_port.getSend_port());
+                    send_port.setMassage(massage);
+                    send_port.send();
+                    Thread.sleep(1000); ///////////////
 
-                // send an object to the server
-//                System.out.println("My Massage on sending port: " + massage + " from node: " + this.id);
-                out.writeObject(massage);
-
-                // close the sockets
-//                System.out.println("Close Socket with sending port: " + port + " from node: " + this.id);
-                out.flush();
-                out.close();
-                out_socket.close();
-
-            } catch (Exception e) {
-                e.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-        }
+//        }
     }
 
 
@@ -205,33 +257,6 @@ public class Node extends Thread {
         this.number_of_nodes = number_of_nodes;
     }
 
-
-    public void build_graph_matrix() {
-        /**
-         * This function builds the graph matrix from all given l_vs
-         * l_vs is the value of all other ArrayList<Pair<Integer, double[]>> other_l_vs
-         */
-        //fill everything with -1
-        this.graph_matrix = new double[this.number_of_nodes][this.number_of_nodes];
-        for (int i = 0; i < this.number_of_nodes; i++) {
-            for (int j = 0; j < this.number_of_nodes; j++) {
-                this.graph_matrix[i][j] = -1;
-            }
-        }
-
-        //fill correct places with propre weights
-        // my data
-        for(int col = 0; col < this.number_of_nodes; col++){
-            this.graph_matrix[this.id - 1][col] = this.l_v[col];
-        }
-        // other's data
-        for (Pair<Integer, double[]> l_v : this.other_l_vs) {
-            int row = l_v.getKey() - 1;
-            for (int col = 0; col < this.number_of_nodes; col++) {
-                this.graph_matrix[row][col] = l_v.getValue()[col];
-            }
-        }
-    }
 
 
     public void print_graph() {
@@ -250,12 +275,5 @@ public class Node extends Thread {
         }
     }
 
-    public void close_all_listen_sockets() throws IOException {
-        // close all listen sockets
-        for (ListenSocket socket : this.all_listen_sockets) {
-            System.out.println("Close Socket with listen port: " + socket.getListen_port() + " from node: " + this.id);
-            socket.close_sockets();
-        }
-    }
 
 }
