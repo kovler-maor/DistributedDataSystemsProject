@@ -4,7 +4,7 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 // This is the Node class which represents a single router in our network.
-public class Node extends Thread {
+public class Node implements Runnable {
 
     private int id; // ID of the router.
 
@@ -19,7 +19,6 @@ public class Node extends Thread {
     public ArrayList<ListenSocket> all_listen_sockets = new ArrayList<ListenSocket>();
 
     public ArrayList<SendSocket> all_send_sockets = new ArrayList<SendSocket>();
-
 
     public Node(int id) {
         this.id = id;
@@ -66,7 +65,6 @@ public class Node extends Thread {
          * this function override Thread "run" and implement all of the
          * link state routing algorithm from the prospective of one node v in graph G
          */
-
         //build lv
         build_l_v();
 
@@ -271,9 +269,7 @@ public class Node extends Thread {
     public void close_all_ports() throws IOException {
         for(ListenSocket listen_socket: this.all_listen_sockets){
             listen_socket.close();
-        }
-        for(SendSocket send_socket: this.all_send_sockets){
-            send_socket.close();
+            listen_socket.interrupt();
         }
     }
 
@@ -291,6 +287,13 @@ public class Node extends Thread {
                     System.out.print(graph_matrix[i][j] + ", ");
                 }
             }
+        }
+    }
+
+    public void close_all_running_threads() throws IOException {
+        for(ListenSocket ls: this.all_listen_sockets){
+            ls.close();
+            ls.interrupt();
         }
     }
 

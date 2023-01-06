@@ -6,7 +6,6 @@ public class ExManager {
     private String path;
     private ArrayList<Node> list_of_nodes;
     public static int network_is_ready;
-    public static int not_all_sockets_closed;
     private boolean first_round;
     public static CountDownLatch latch;
 
@@ -32,12 +31,12 @@ public class ExManager {
         // read line by line, split, and use the data to build nodes and neighbors
         while (true) {
             line = br.readLine();
-            if(line.equals("stop")){
+            if (line.equals("stop")) {
                 break;
             }
             String[] words = line.split("\\s+");
 
-            if(first_round){
+            if (first_round) {
                 first_round = false;
                 node = new Node(Integer.parseInt(words[0]));
                 this.list_of_nodes.add(node);
@@ -59,21 +58,21 @@ public class ExManager {
                 int neighbor_send_port = Integer.parseInt(words[i + 2]);
                 int neighbor_listen_port = Integer.parseInt(words[i + 3]);
                 node.add_neighbor(neighbor_id, neighbor_weight, neighbor_send_port, neighbor_listen_port);
-                network_is_ready+=2;
+                network_is_ready += 2;
             }
         }
-        if(this.first_round){
+        if (this.first_round) {
             this.first_round = false;
             init_ex_manager();
         }
     }
 
 
-    public void init_ex_manager(){
+    public void init_ex_manager() {
         // inform nodes of the graph size (they need it to build the graph_matrix attribute)
         send_to_all_number_of_nodes();
 
-        for (Node node: this.list_of_nodes){
+        for (Node node : this.list_of_nodes) {
             node.init_empty_graph_matrix();
         }
 
@@ -81,10 +80,11 @@ public class ExManager {
         try {
             open_all_listen_ports();
             open_all_send_ports();
-        } catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        while(network_is_ready != 0){ }
+        while (network_is_ready != 0) {
+        }
     }
 
 
@@ -96,7 +96,7 @@ public class ExManager {
         try {
             latch = new CountDownLatch(getNum_of_nodes()); // wait for two threads to complete
             start_sending_massages();
-        } catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -107,59 +107,62 @@ public class ExManager {
         try {
             latch.await(); // main program will wait here until latch count reaches zero
             stop_sending_massages(); // stop sending massages
-        } catch (Exception e){
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
     }
 
 
-    public static void dec_network_is_ready(){
+    public static void dec_network_is_ready() {
         network_is_ready--;
     }
 
 
-    public void send_to_all_number_of_nodes(){
+    public void send_to_all_number_of_nodes() {
         int number_of_nodes = getNum_of_nodes();
-        for(Node node: this.list_of_nodes){
+        for (Node node : this.list_of_nodes) {
             node.set_number_of_nodes(number_of_nodes);
         }
     }
 
 
     public void open_all_listen_ports() throws IOException {
-        for(Node node: this.list_of_nodes){
+        for (Node node : this.list_of_nodes) {
             node.build_all_listen_sockets();
         }
     }
 
 
     public void open_all_send_ports() throws IOException {
-        for(Node node: this.list_of_nodes){
+        for (Node node : this.list_of_nodes) {
             node.build_all_send_sockets();
         }
     }
 
     public void stop_sending_massages() throws IOException {
-        for(Node node: this.list_of_nodes){
+        for (Node node : this.list_of_nodes) {
             node.stop_sending_massages();
         }
     }
 
     public void start_sending_massages() throws IOException {
-        for(Node node: this.list_of_nodes){
+        for (Node node : this.list_of_nodes) {
             node.start_sending_massages();
         }
     }
 
 
-    public void run_all_nodes(){
-        for(Node node: this.list_of_nodes){
+    public void run_all_nodes() {
+        for (Node node : this.list_of_nodes) {
             node.clean_graph_matrix();
-            node.start();
+        }
+        for (Node node : this.list_of_nodes) {
+            Thread thread = new Thread(node);
+            thread.start();
         }
     }
-
 
 
     public void update_edge(int id1, int id2, double weight) {
@@ -206,8 +209,7 @@ public class ExManager {
                 }
             }
             return wanted_node;
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
@@ -220,23 +222,14 @@ public class ExManager {
     }
 
 
-    public void terminate() {
-        not_all_sockets_closed = 0;
-
-        try {
-            for (Node node : this.list_of_nodes) {
-                not_all_sockets_closed+= node.all_listen_sockets.size();
-                not_all_sockets_closed+= node.all_send_sockets.size();
-                node.close_all_ports();
+    public void terminate() throws InterruptedException, IOException {
+        for (Node node : this.list_of_nodes) {
+            for (ListenSocket ls: node.all_listen_sockets){
+                ls.interrupt();
+                ls.close();
             }
-
-            while (not_all_sockets_closed != 0){
-                Thread.sleep(100);
-            }
-
-        } catch (Exception e){
-            e.printStackTrace();
         }
+
     }
 
 }

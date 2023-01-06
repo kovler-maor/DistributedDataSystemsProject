@@ -4,7 +4,7 @@ import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class SendSocket extends Thread{
+public class SendSocket {
 
     private final int send_port;
 
@@ -13,6 +13,7 @@ public class SendSocket extends Thread{
     private static final Lock sent_lock = new ReentrantLock();
 
     private boolean stop_sending_massages = false;
+
 
 
 

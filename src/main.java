@@ -6,7 +6,8 @@ import java.util.Scanner;
 public class main {
     public static void main(String[] args) throws IOException {
         String[] paths = {"C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\Java" +
-                "Technion\\DistributedDataSystemsProject\\src\\input_1.txt"}; //enter the path to the files you want to run here.
+                "Technion\\DistributedDataSystemsProject\\src\\input_1.txt", "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\Java" +
+                "Technion\\DistributedDataSystemsProject\\src\\input_2.txt"}; //enter the path to the files you want to run here.
         for (String path : paths) {
             ExManager m = new ExManager(path);
             m.read_txt();
@@ -29,7 +30,11 @@ public class main {
                     m.update_edge(Integer.parseInt(data[1]), Integer.parseInt(data[2]), Double.parseDouble(data[3]));
                 }
             }
-            m.terminate();
+            try {
+                m.terminate();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

@@ -4,7 +4,7 @@ import java.util.*;
 
 public class ListenSocket extends Thread{
 
-    private ServerSocket ss;
+    public ServerSocket ss;
 
     private ArrayList<Pair<Integer, ArrayList<Object>>> neighbors;
 
@@ -17,6 +17,8 @@ public class ListenSocket extends Thread{
     public double[][] graph_matrix;
 
     private int num_of_massage_to_send;
+
+    private volatile boolean exit = false;
 
 
     public ListenSocket(int listen_port, ArrayList<Pair<Integer,
@@ -31,7 +33,6 @@ public class ListenSocket extends Thread{
 
     @Override
     public void run() {
-
         Socket s = null;
         try {
             s = this.ss.accept();
@@ -48,6 +49,7 @@ public class ListenSocket extends Thread{
 //                    System.out.println("MASSAGE originally from = " + packet_lv.getKey() + " through: " + ss.getLocalPort());
                     int id = packet_lv.getKey();
                     this.graph_matrix[id - 1] = packet_lv.getValue();
+
 
                     // sent to all my neighbors except v that sent the original packet
                     this.num_of_massage_to_send = this.all_send_sockets.size();
@@ -80,7 +82,6 @@ public class ListenSocket extends Thread{
 
     public void close() throws IOException {
         this.ss.close();
-        ExManager.not_all_sockets_closed--;
     }
 
 
