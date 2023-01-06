@@ -59,6 +59,7 @@ public class Node extends Thread {
         }
     }
 
+
     @Override
     public void run() {
         /**
@@ -90,11 +91,19 @@ public class Node extends Thread {
         // now we have all the data and can finish for node n.
         ExManager.latch.countDown();
 
-
     }
 
     public void init_empty_graph_matrix(){
         this.graph_matrix = new double[this.number_of_nodes][this.number_of_nodes];
+    }
+
+
+    public void clean_graph_matrix(){
+        for (int i = 0; i < this.graph_matrix.length; i++) {
+            for (int j = 0; j < this.graph_matrix.length; j++) {
+                this.graph_matrix[i][j] = 0.0;
+            }
+        }
     }
 
 
@@ -108,11 +117,18 @@ public class Node extends Thread {
     }
 
 
-    public void all_sockets_ready_to_stop(){
-        for (ListenSocket listen_socket : this.all_listen_sockets) {
-            listen_socket.not_ready_to_stop = false;
+    public void stop_sending_massages() {
+        for (SendSocket send_port : this.all_send_sockets) {
+            send_port.stop_sending_massages();
         }
     }
+
+    public void start_sending_massages() {
+        for (SendSocket send_port : this.all_send_sockets) {
+            send_port.start_sending_massages();
+        }
+    }
+
 
 
     public void forward_sent_to_listen_sockets(){
@@ -251,6 +267,15 @@ public class Node extends Thread {
         this.number_of_nodes = number_of_nodes;
     }
 
+
+    public void close_all_ports() throws IOException {
+        for(ListenSocket listen_socket: this.all_listen_sockets){
+            listen_socket.close();
+        }
+        for(SendSocket send_socket: this.all_send_sockets){
+            send_socket.close();
+        }
+    }
 
 
     public void print_graph() {

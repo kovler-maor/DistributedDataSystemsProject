@@ -6,6 +6,7 @@ public class ExManager {
     private String path;
     private ArrayList<Node> list_of_nodes;
     public static int network_is_ready;
+    public static int not_all_sockets_closed;
     private boolean first_round;
     public static CountDownLatch latch;
 
@@ -92,7 +93,12 @@ public class ExManager {
          * This function starting the link state routing algorithm for all the nodes in the the graph
          */
 
-        latch = new CountDownLatch(getNum_of_nodes()); // wait for two threads to complete
+        try {
+            latch = new CountDownLatch(getNum_of_nodes()); // wait for two threads to complete
+            start_sending_massages();
+        } catch (Exception e){
+            e.printStackTrace();
+        }
 
         // call the run() function for all the nodes in G
         run_all_nodes();
@@ -100,7 +106,7 @@ public class ExManager {
         // get here only if all nodes have build their graph matrix already
         try {
             latch.await(); // main program will wait here until latch count reaches zero
-            terminate(); //??????????
+            stop_sending_massages(); // stop sending massages
         } catch (Exception e){
             e.printStackTrace();
         }
@@ -121,13 +127,6 @@ public class ExManager {
     }
 
 
-    public void all_nodes_ready_to_stop(){
-        for(Node node: this.list_of_nodes){
-            node.all_sockets_ready_to_stop();
-        }
-    }
-
-
     public void open_all_listen_ports() throws IOException {
         for(Node node: this.list_of_nodes){
             node.build_all_listen_sockets();
@@ -141,12 +140,26 @@ public class ExManager {
         }
     }
 
+    public void stop_sending_massages() throws IOException {
+        for(Node node: this.list_of_nodes){
+            node.stop_sending_massages();
+        }
+    }
+
+    public void start_sending_massages() throws IOException {
+        for(Node node: this.list_of_nodes){
+            node.start_sending_massages();
+        }
+    }
+
 
     public void run_all_nodes(){
         for(Node node: this.list_of_nodes){
+            node.clean_graph_matrix();
             node.start();
         }
     }
+
 
 
     public void update_edge(int id1, int id2, double weight) {
@@ -208,7 +221,22 @@ public class ExManager {
 
 
     public void terminate() {
-        // think about it...
+        not_all_sockets_closed = 0;
+
+        try {
+            for (Node node : this.list_of_nodes) {
+                not_all_sockets_closed+= node.all_listen_sockets.size();
+                not_all_sockets_closed+= node.all_send_sockets.size();
+                node.close_all_ports();
+            }
+
+            while (not_all_sockets_closed != 0){
+                Thread.sleep(100);
+            }
+
+        } catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
 }

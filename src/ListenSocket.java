@@ -35,12 +35,11 @@ public class ListenSocket extends Thread{
         Socket s = null;
         try {
             s = this.ss.accept();
-//            System.out.println("Connection!!!");
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        while (true) {
+        while (!(ss.isClosed())) {
             try {
                 ObjectInputStream objectInputStream = new ObjectInputStream(s.getInputStream());
                 Object object = objectInputStream.readObject();
@@ -72,10 +71,16 @@ public class ListenSocket extends Thread{
         }
         for (SendSocket send_socket : this.all_send_sockets) {
             if (send_socket.getSend_port() != sender_listen_port) {
-                send_socket.send(massage);
+                if(!(send_socket.getSocket().isClosed()))
+                    send_socket.send(massage);
             }
             this.num_of_massage_to_send--;
         }
+    }
+
+    public void close() throws IOException {
+        this.ss.close();
+        ExManager.not_all_sockets_closed--;
     }
 
 

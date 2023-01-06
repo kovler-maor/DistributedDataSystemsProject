@@ -5,7 +5,8 @@ import java.util.Scanner;
 
 public class main {
     public static void main(String[] args) throws IOException {
-        String[] paths = {"C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\DistributedDataSystemsProject\\src\\input_1.txt"}; //enter the path to the files you want to run here.
+        String[] paths = {"C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\Java" +
+                "Technion\\DistributedDataSystemsProject\\src\\input_1.txt"}; //enter the path to the files you want to run here.
         for (String path : paths) {
             ExManager m = new ExManager(path);
             m.read_txt();
