@@ -63,9 +63,4 @@ public class SendSocket {
     }
 
 
-    public void close() throws IOException {
-        this.s.close();
-        ExManager.not_all_sockets_closed--;
-    }
-
 }
