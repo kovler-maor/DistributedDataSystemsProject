@@ -18,7 +18,7 @@ public class ListenSocket extends Thread{
 
     private int num_of_massage_to_send;
 
-    private volatile boolean exit = false;
+    private boolean isClose;
 
 
     public ListenSocket(int listen_port, ArrayList<Pair<Integer,
@@ -29,6 +29,7 @@ public class ListenSocket extends Thread{
         this.neighbors = neighbors;
         this.number_of_nodes = number_of_nodes;
         this.graph_matrix = graph_matrix;
+        this.isClose = false;
     }
 
     @Override
@@ -40,22 +41,24 @@ public class ListenSocket extends Thread{
             e.printStackTrace();
         }
 
-        while (!(ss.isClosed())) {
+        while (true) {
             try {
                 ObjectInputStream objectInputStream = new ObjectInputStream(s.getInputStream());
                 Object object = objectInputStream.readObject();
                 if (object instanceof Pair) {
                     Pair<Integer, double[]> packet_lv= (Pair<Integer, double[]>) object;
-//                    System.out.println("MASSAGE originally from = " + packet_lv.getKey() + " through: " + ss.getLocalPort());
                     int id = packet_lv.getKey();
                     this.graph_matrix[id - 1] = packet_lv.getValue();
-
 
                     // sent to all my neighbors except v that sent the original packet
                     this.num_of_massage_to_send = this.all_send_sockets.size();
                     forward(packet_lv, ss.getLocalPort());
-                    while (this.num_of_massage_to_send > 0) {
-                    }
+
+                } else {
+                    s.close();
+                    this.ss.close();
+                    this.isClose = true;
+                    break;
                 }
 
             } catch (IOException | ClassNotFoundException | InterruptedException e) {

@@ -20,6 +20,8 @@ public class Node implements Runnable {
 
     public ArrayList<SendSocket> all_send_sockets = new ArrayList<SendSocket>();
 
+    private ArrayList<Integer> nodes_who_sent_messages = new ArrayList<>();
+
     public Node(int id) {
         this.id = id;
     }
@@ -88,7 +90,6 @@ public class Node implements Runnable {
 
         // now we have all the data and can finish for node n.
         ExManager.latch.countDown();
-
     }
 
     public void init_empty_graph_matrix(){
@@ -113,20 +114,6 @@ public class Node implements Runnable {
         }
         return true;
     }
-
-
-    public void stop_sending_massages() {
-        for (SendSocket send_port : this.all_send_sockets) {
-            send_port.stop_sending_massages();
-        }
-    }
-
-    public void start_sending_massages() {
-        for (SendSocket send_port : this.all_send_sockets) {
-            send_port.start_sending_massages();
-        }
-    }
-
 
 
     public void forward_sent_to_listen_sockets(){
@@ -173,7 +160,7 @@ public class Node implements Runnable {
     }
 
 
-    public void build_all_listen_sockets() throws IOException {
+    public ArrayList<ListenSocket> build_all_listen_sockets() throws IOException {
         /**
          * this function will build all my in sockets and listen to all of them
          * it will stop once my node have gotten all the data he needs
@@ -196,39 +183,16 @@ public class Node implements Runnable {
             try {
 //                System.out.println("Open Socket with listen port: " + port  + " from node: " + this.id);
                 ListenSocket listen_socket = new ListenSocket(port, this.neighbors, this.number_of_nodes, this.graph_matrix);
-                listen_socket.start();
+                listen_socket.start(); // maybe not start it here
                 this.all_listen_sockets.add(listen_socket);
-                ExManager.dec_network_is_ready();
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+
+        return this.all_listen_sockets;
     }
 
-
-    public void build_all_send_sockets() throws IOException {
-        /**
-         * @Pair<Integer, double[]> my_lv_massage
-         * this function will build all my out sockets
-         */
-
-        // build a list of all the in ports i should listen to
-        ArrayList<Integer> out_ports = new ArrayList<Integer>();
-
-        for (Pair<Integer, ArrayList<Object>> neighbor : this.neighbors) {
-            out_ports.add((Integer) neighbor.getValue().get(1));
-        }
-
-        // listen to all my in ports
-        for (int port : out_ports) {
-//            System.out.println("Open with send port Socket: " + port  + " from node: " + this.id);
-            SendSocket send_socket = new SendSocket(port);
-            this.all_send_sockets.add(send_socket);
-            ExManager.dec_network_is_ready();
-        }
-        forward_sent_to_listen_sockets();
-    }
 
 
     public void send_pair_to_all(Pair<Integer, double[]> massage) throws InterruptedException {
@@ -268,8 +232,7 @@ public class Node implements Runnable {
 
     public void close_all_ports() throws IOException {
         for(ListenSocket listen_socket: this.all_listen_sockets){
-            listen_socket.close();
-            listen_socket.interrupt();
+            listen_socket.ss.close();
         }
     }
 
@@ -290,12 +253,6 @@ public class Node implements Runnable {
         }
     }
 
-    public void close_all_running_threads() throws IOException {
-        for(ListenSocket ls: this.all_listen_sockets){
-            ls.close();
-            ls.interrupt();
-        }
-    }
 
 
 }
