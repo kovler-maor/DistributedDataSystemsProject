@@ -2,6 +2,8 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 // This is the Node class which represents a single router in our network.
 public class Node implements Runnable {
@@ -21,6 +23,8 @@ public class Node implements Runnable {
     public ArrayList<SendSocket> all_send_sockets = new ArrayList<SendSocket>();
 
     private ArrayList<Integer> nodes_who_sent_messages = new ArrayList<>();
+
+    private Lock lock = new ReentrantLock();
 
     public Node(int id) {
         this.id = id;
@@ -87,11 +91,9 @@ public class Node implements Runnable {
             while (!check_full_matrix()){Thread.sleep(100);}
 
             // now we have all the data and can finish for node n.
+            lock.lock();
             ExManager.latch.countDown();
-
-            // clear sockets
-//            this.all_send_sockets.clear();
-//            this.all_listen_sockets.clear();
+            lock.unlock();
 
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
@@ -100,13 +102,18 @@ public class Node implements Runnable {
 
     public void init_empty_graph_matrix(){
         this.graph_matrix = new double[this.number_of_nodes][this.number_of_nodes];
-    }
+        for(int i = 0; i < this.graph_matrix.length; i++){
+            for(int j = 0; j < this.graph_matrix.length; j++){
+                this.graph_matrix[i][j] = -2.0;
+            }
+        }
 
+    }
 
     public void clean_graph_matrix(){
         for (int i = 0; i < this.graph_matrix.length; i++) {
             for (int j = 0; j < this.graph_matrix.length; j++) {
-                this.graph_matrix[i][j] = 0.0;
+                this.graph_matrix[i][j] = -2.0;
             }
         }
     }
@@ -114,7 +121,7 @@ public class Node implements Runnable {
 
     public boolean check_full_matrix(){
         for (double[] inner_list : this.graph_matrix){
-            if (inner_list[0] == 0.0){
+            if (inner_list[0] == -2.0){
                 return false;
             }
         }

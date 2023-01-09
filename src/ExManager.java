@@ -14,52 +14,57 @@ public class ExManager {
         this.list_of_nodes = new ArrayList<Node>();
     }
 
-    public void read_txt() throws IOException {
+    public void read_txt(){
         /**
          * This function reads from file and creates the nodes and their neighbors.
          */
+        try{
+            FileReader fr = new FileReader(this.path);
+            BufferedReader br = new BufferedReader(fr);
+            String line;
+            Node node = null;
+            boolean first_round = true;
 
-        FileReader fr = new FileReader(this.path);
-        BufferedReader br = new BufferedReader(fr);
-        String line;
-        Node node = null;
-        boolean first_round = true;
+            // read line by line, split, and use the data to build nodes and neighbors
+            while (true) {
+                line = br.readLine();
+                if (line.equals("stop")) {
+                    break;
+                }
+                String[] words = line.split("\\s+");
 
-        // read line by line, split, and use the data to build nodes and neighbors
-        while (true) {
-            line = br.readLine();
-            if (line.equals("stop")) {
-                break;
-            }
-            String[] words = line.split("\\s+");
-
-            if (first_round) {
-                first_round = false;
-                node = new Node(Integer.parseInt(words[0]));
-                this.list_of_nodes.add(node);
-
-            } else {
-                ArrayList<Integer> nodes_ids = get_nodes_ids();
-                if (!nodes_ids.contains(Integer.parseInt(words[0]))) {
+                if (first_round) {
+                    first_round = false;
                     node = new Node(Integer.parseInt(words[0]));
                     this.list_of_nodes.add(node);
+
                 } else {
-                    node = get_node(Integer.parseInt(words[0]));
+                    ArrayList<Integer> nodes_ids = get_nodes_ids();
+                    if (!nodes_ids.contains(Integer.parseInt(words[0]))) {
+                        node = new Node(Integer.parseInt(words[0]));
+                        this.list_of_nodes.add(node);
+                    } else {
+                        node = get_node(Integer.parseInt(words[0]));
+                    }
+                }
+
+                // build the neighbor list for given node
+                for (int i = 1; i < words.length; i += 4) {
+                    int neighbor_id = Integer.parseInt(words[i]);
+                    double neighbor_weight = Double.parseDouble(words[i + 1]);
+                    int neighbor_send_port = Integer.parseInt(words[i + 2]);
+                    int neighbor_listen_port = Integer.parseInt(words[i + 3]);
+                    node.add_neighbor(neighbor_id, neighbor_weight, neighbor_send_port, neighbor_listen_port);
                 }
             }
+            // inform nodes of the graph size (they need it to build the graph_matrix attribute)
+            send_to_all_number_of_nodes();
 
-            // build the neighbor list for given node
-            for (int i = 1; i < words.length; i += 4) {
-                int neighbor_id = Integer.parseInt(words[i]);
-                double neighbor_weight = Double.parseDouble(words[i + 1]);
-                int neighbor_send_port = Integer.parseInt(words[i + 2]);
-                int neighbor_listen_port = Integer.parseInt(words[i + 3]);
-                node.add_neighbor(neighbor_id, neighbor_weight, neighbor_send_port, neighbor_listen_port);
-            }
+        }catch (Exception e){
+            e.printStackTrace();
         }
-        // inform nodes of the graph size (they need it to build the graph_matrix attribute)
-        send_to_all_number_of_nodes();
     }
+
 
 
     public void init_ex_manager() {
@@ -143,12 +148,25 @@ public class ExManager {
     }
 
     public void close_all_listen_sockets() throws IOException, InterruptedException {
+        // clean network from unwanted massages
         for (ListenSocket listenSocket : this.all_nodes_listen_sockets){
             listenSocket.stop_forwarding = true;
         }
 
-        Thread.sleep(5000);
+        // all listen socket is got to the point they stop forwarding the massages so the network is clean.
+        boolean all_forward_closed = false;
+        while (!all_forward_closed){
+            all_forward_closed = true;
+            for (ListenSocket listenSocket : this.all_nodes_listen_sockets){
+                if (!listenSocket.forwarding_is_closed){
+                    all_forward_closed = false;
+                }
+            }
+        }
+//        Thread.sleep(5000);
 
+
+        // close all listen sockets through sending socket massages
         for (Node node : this.list_of_nodes){
             for (SendSocket sendSocket : node.all_send_sockets){
                 sendSocket.send_close_massage();
