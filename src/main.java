@@ -12,11 +12,15 @@ public class main {
 
             int num_of_nodes = m.getNum_of_nodes();
 
+            int counter =0;
+
             Scanner scanner = new Scanner(new File(path));
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
 
                 if(line.contains("start")){
+                    counter++;
+                    if (counter == 3){}
                     m.start();
                     for(Node node: m.list_of_nodes){
                         System.out.println("Node number " + String.valueOf(node.get_node_id()) + " Matrix");

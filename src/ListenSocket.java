@@ -2,7 +2,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-public class ListenSocket extends Thread{
+public class ListenSocket implements Runnable{
 
     public ServerSocket ss;
 
@@ -18,7 +18,8 @@ public class ListenSocket extends Thread{
 
     private int num_of_massage_to_send;
 
-    private boolean isClose;
+    public boolean isClose;
+    public boolean stop_forwarding;
 
 
     public ListenSocket(int listen_port, ArrayList<Pair<Integer,
@@ -30,29 +31,30 @@ public class ListenSocket extends Thread{
         this.number_of_nodes = number_of_nodes;
         this.graph_matrix = graph_matrix;
         this.isClose = false;
+        this.stop_forwarding = false;
     }
 
     @Override
     public void run() {
-        Socket s = null;
         try {
-            s = this.ss.accept();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+            Socket s = this.ss.accept();
 
-        while (true) {
-            try {
+            while (true) {
+
                 ObjectInputStream objectInputStream = new ObjectInputStream(s.getInputStream());
                 Object object = objectInputStream.readObject();
                 if (object instanceof Pair) {
-                    Pair<Integer, double[]> packet_lv= (Pair<Integer, double[]>) object;
+
+                    // get the packet
+                    Pair<Integer, double[]> packet_lv = (Pair<Integer, double[]>) object;
                     int id = packet_lv.getKey();
                     this.graph_matrix[id - 1] = packet_lv.getValue();
 
                     // sent to all my neighbors except v that sent the original packet
                     this.num_of_massage_to_send = this.all_send_sockets.size();
-                    forward(packet_lv, ss.getLocalPort());
+                    if (!this.stop_forwarding) {
+                        forward(packet_lv, ss.getLocalPort());
+                    }
 
                 } else {
                     s.close();
@@ -60,12 +62,13 @@ public class ListenSocket extends Thread{
                     this.isClose = true;
                     break;
                 }
-
-            } catch (IOException | ClassNotFoundException | InterruptedException e) {
-                e.printStackTrace();
             }
+
+        } catch (IOException | ClassNotFoundException | InterruptedException e) {
+            e.printStackTrace();
         }
     }
+
 
     public void forward(Pair<Integer, double[]> massage, int sender_send_port) throws IOException, InterruptedException {
         int sender_listen_port = 0;

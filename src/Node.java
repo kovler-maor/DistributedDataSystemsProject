@@ -67,29 +67,31 @@ public class Node implements Runnable {
          * this function override Thread "run" and implement all of the
          * link state routing algorithm from the prospective of one node v in graph G
          */
-        //build lv
-        build_l_v();
-
-        // init - add my lv
-        this.graph_matrix[this.id-1] = this.l_v;
-
-        // start by build my lv
-        Pair<Integer, double[]> my_lv_massage = new Pair(this.id, this.l_v); //build my massage
-
-        // send my lv to all other x in G
         try {
+            // build all my send sockets
+            build_all_send_sockets();
+
+            //build lv
+            build_l_v();
+
+            // init - add my lv
+            this.graph_matrix[this.id-1] = this.l_v;
+
+            // start by build my lv
+            Pair<Integer, double[]> my_lv_massage = new Pair(this.id, this.l_v); //build my massage
+
+            // send my lv to all other x in G
             send_pair_to_all(my_lv_massage);
 
             // wait until i have my full graph_matrix
-            while (!check_full_matrix()){
-                Thread.sleep(100);
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+            while (!check_full_matrix()){Thread.sleep(100);}
 
-        // now we have all the data and can finish for node n.
-        ExManager.latch.countDown();
+            // now we have all the data and can finish for node n.
+            ExManager.latch.countDown();
+
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void init_empty_graph_matrix(){
@@ -181,9 +183,8 @@ public class Node implements Runnable {
         // listen to all my in ports
         for (int port : in_ports) {
             try {
-//                System.out.println("Open Socket with listen port: " + port  + " from node: " + this.id);
                 ListenSocket listen_socket = new ListenSocket(port, this.neighbors, this.number_of_nodes, this.graph_matrix);
-                listen_socket.start(); // maybe not start it here
+
                 this.all_listen_sockets.add(listen_socket);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -193,6 +194,27 @@ public class Node implements Runnable {
         return this.all_listen_sockets;
     }
 
+    public void build_all_send_sockets() throws IOException {
+        /**
+         * @Pair<Integer, double[]> my_lv_massage
+         * this function will build all my out sockets
+         */
+
+        // build a list of all the in ports i should listen to
+        ArrayList<Integer> out_ports = new ArrayList<Integer>();
+
+        for (Pair<Integer, ArrayList<Object>> neighbor : this.neighbors) {
+            out_ports.add((Integer) neighbor.getValue().get(1));
+        }
+
+        // listen to all my in ports
+        for (int port : out_ports) {
+//            System.out.println("Open with send port Socket: " + port  + " from node: " + this.id);
+            SendSocket send_socket = new SendSocket(port);
+            this.all_send_sockets.add(send_socket);
+        }
+        forward_sent_to_listen_sockets();
+    }
 
 
     public void send_pair_to_all(Pair<Integer, double[]> massage) throws InterruptedException {

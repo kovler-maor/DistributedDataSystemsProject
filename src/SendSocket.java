@@ -12,8 +12,6 @@ public class SendSocket {
 
     private static final Lock sent_lock = new ReentrantLock();
 
-    private boolean stop_sending_massages = false;
-
 
 
 
@@ -28,21 +26,27 @@ public class SendSocket {
 
 
     public void send(Pair<Integer, double[]> massage){
-        if (!stop_sending_massages) {
-            try {
-                sent_lock.lock();
-                if ((!(s.isClosed()))) {
-                    ObjectOutputStream out = new ObjectOutputStream(this.s.getOutputStream());
-                    // send an object to the server
-                    out.writeObject(massage);
-                    out.flush();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                sent_lock.unlock();
+
+        try {
+            sent_lock.lock();
+            if ((!(s.isClosed()))) {
+                ObjectOutputStream out = new ObjectOutputStream(this.s.getOutputStream());
+                out.writeObject(massage);
+                out.flush();
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            sent_lock.unlock();
         }
+    }
+
+
+    public void send_close_massage() throws IOException {
+        Object close_massage = 0;
+        ObjectOutputStream out = new ObjectOutputStream(this.s.getOutputStream());
+        out.writeObject(close_massage);
+        out.flush();
     }
 
     public int getSend_port() {
@@ -52,14 +56,6 @@ public class SendSocket {
 
     public Socket getSocket() {
         return s;
-    }
-
-    public void stop_sending_massages(){
-        this.stop_sending_massages = true;
-    }
-
-    public void start_sending_massages(){
-        this.stop_sending_massages = false;
     }
 
 

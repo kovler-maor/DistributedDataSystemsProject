@@ -73,7 +73,8 @@ public class ExManager {
 
             // run them all
             for (ListenSocket listenSocket : this.all_nodes_listen_sockets){
-                listenSocket.start();
+                Thread thread = new Thread(listenSocket);
+                thread.start();
             }
 
         } catch (Exception e) {
@@ -88,6 +89,7 @@ public class ExManager {
          */
 
         try {
+            // empty matrix + open listen sockets + run them
             init_ex_manager();
 
             latch = new CountDownLatch(getNum_of_nodes()); // wait for two threads to complete
@@ -102,12 +104,25 @@ public class ExManager {
             // kill all running listen sockets
             close_all_listen_sockets();
 
+            //wait until all socket are closed
+            wait_until_all_socket_closed();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+    }
 
-
+    public void wait_until_all_socket_closed(){
+        boolean all_closed = false;
+        while (!all_closed){
+            all_closed = true;
+            for (ListenSocket listenSocket : this.all_nodes_listen_sockets){
+                if (!listenSocket.isClose){
+                    all_closed = false;
+                }
+            }
+        }
     }
 
 
@@ -125,9 +140,17 @@ public class ExManager {
         }
     }
 
-    public void close_all_listen_sockets(){
+    public void close_all_listen_sockets() throws IOException, InterruptedException {
         for (ListenSocket listenSocket : this.all_nodes_listen_sockets){
+            listenSocket.stop_forwarding = true;
+        }
 
+        Thread.sleep(4000);
+
+        for (Node node : this.list_of_nodes){
+            for (SendSocket sendSocket : node.all_send_sockets){
+                sendSocket.send_close_massage();
+            }
         }
     }
 
