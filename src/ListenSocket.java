@@ -12,8 +12,6 @@ public class ListenSocket implements Runnable{
 
     public ArrayList<SendSocket> all_send_sockets;
 
-    public boolean not_ready_to_stop = true;
-
     public double[][] graph_matrix;
 
     private int num_of_massage_to_send;
@@ -37,7 +35,9 @@ public class ListenSocket implements Runnable{
     @Override
     public void run() {
         try {
+            this.isClose = false;
             Socket s = this.ss.accept();
+            System.out.println("Connection");
 
             while (true) {
 
@@ -51,15 +51,18 @@ public class ListenSocket implements Runnable{
                     this.graph_matrix[id - 1] = packet_lv.getValue();
 
                     // sent to all my neighbors except v that sent the original packet
+                    while (this.all_send_sockets.isEmpty()){}
                     this.num_of_massage_to_send = this.all_send_sockets.size();
                     if (!this.stop_forwarding) {
                         forward(packet_lv, ss.getLocalPort());
                     }
 
                 } else {
+                    System.out.println(object);
                     s.close();
                     this.ss.close();
                     this.isClose = true;
+                    System.out.println("Connection Closed");
                     break;
                 }
             }
@@ -77,6 +80,7 @@ public class ListenSocket implements Runnable{
                 sender_listen_port = (int) neighbor.getValue().get(1);
             }
         }
+        while (this.all_send_sockets.isEmpty()){}
         for (SendSocket send_socket : this.all_send_sockets) {
             if (send_socket.getSend_port() != sender_listen_port) {
                 if(!(send_socket.getSocket().isClosed()))
@@ -84,10 +88,6 @@ public class ListenSocket implements Runnable{
             }
             this.num_of_massage_to_send--;
         }
-    }
-
-    public void close() throws IOException {
-        this.ss.close();
     }
 
 

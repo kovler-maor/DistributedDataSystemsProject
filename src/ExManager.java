@@ -107,6 +107,8 @@ public class ExManager {
             //wait until all socket are closed
             wait_until_all_socket_closed();
 
+            this.all_nodes_listen_sockets.clear();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -145,12 +147,14 @@ public class ExManager {
             listenSocket.stop_forwarding = true;
         }
 
-        Thread.sleep(4000);
+        Thread.sleep(5000);
 
         for (Node node : this.list_of_nodes){
             for (SendSocket sendSocket : node.all_send_sockets){
                 sendSocket.send_close_massage();
             }
+            node.all_send_sockets.clear();
+            node.all_listen_sockets.clear();
         }
     }
 

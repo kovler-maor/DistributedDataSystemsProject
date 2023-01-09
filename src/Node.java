@@ -89,6 +89,10 @@ public class Node implements Runnable {
             // now we have all the data and can finish for node n.
             ExManager.latch.countDown();
 
+            // clear sockets
+//            this.all_send_sockets.clear();
+//            this.all_listen_sockets.clear();
+
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }

@@ -20,7 +20,9 @@ public class main {
 
                 if(line.contains("start")){
                     counter++;
-                    if (counter == 3){}
+                    if (counter == 3){
+                        int x =5;
+                    }
                     m.start();
                     for(Node node: m.list_of_nodes){
                         System.out.println("Node number " + String.valueOf(node.get_node_id()) + " Matrix");
