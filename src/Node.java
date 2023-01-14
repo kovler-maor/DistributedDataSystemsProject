@@ -220,7 +220,6 @@ public class Node implements Runnable {
 
         // listen to all my in ports
         for (int port : out_ports) {
-//            System.out.println("Open with send port Socket: " + port  + " from node: " + this.id);
             SendSocket send_socket = new SendSocket(port);
             this.all_send_sockets.add(send_socket);
         }
@@ -239,7 +238,6 @@ public class Node implements Runnable {
         for (SendSocket send_port : this.all_send_sockets) {
             try {
                 // create new sockets
-//                System.out.println("My massage send on port: " + send_port.getSend_port());
                 send_port.send(massage);
 
             } catch (Exception e) {
@@ -263,18 +261,10 @@ public class Node implements Runnable {
     }
 
 
-    public void close_all_ports() throws IOException {
-        for(ListenSocket listen_socket: this.all_listen_sockets){
-            listen_socket.ss.close();
-        }
-    }
-
-
     public void print_graph() {
         /**
          * print the graph matrix
          */
-//        System.out.println("Graph of node: " + this.id);
         for (int i = 0; i < this.graph_matrix.length; i++) {
             for (int j = 0; j < this.graph_matrix.length; j++) {
                 if (j == this.graph_matrix.length - 1) {

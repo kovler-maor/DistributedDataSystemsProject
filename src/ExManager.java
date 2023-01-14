@@ -162,6 +162,7 @@ public class ExManager {
                     all_forward_closed = false;
                 }
             }
+            Thread.sleep(1);
         }
 //        Thread.sleep(1000);
 

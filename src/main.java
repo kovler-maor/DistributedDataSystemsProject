@@ -5,7 +5,7 @@ import java.util.Scanner;
 public class main {
     public static void main(String[] args) throws FileNotFoundException {
         String[] paths = {"C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\" +
-                "JavaTechnion\\DistributedDataSystemsProject\\src\\input_3" +
+                "JavaTechnion\\DistributedDataSystemsProject\\src\\input_4" +
                 ".txt"
                 };
         for(String path: paths) {

@@ -111,20 +111,6 @@ public class ListenSocket implements Runnable{
         }
     }
 
-
-    public void forward_for_last_time() throws IOException, InterruptedException {
-        // forward to all sockets that the network
-        // is about to be closed so they need to stop and
-        // change forwarding_is_closed to true
-        if(!this.forwarding_is_closed) {
-            double[] d = new double[2];
-            Integer i = -5;
-            Pair<Integer, double[]> close_your_forward = new Pair(i, d);
-            forward(close_your_forward, this.ss.getLocalPort());
-        }
-        this.forwarding_is_closed = true;
-    }
-
     public boolean check_full_matrix(){
         for (double[] inner_list : this.graph_matrix){
             if (inner_list[0] == -2.0){
