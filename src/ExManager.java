@@ -149,9 +149,9 @@ public class ExManager {
 
     public void close_all_listen_sockets() throws IOException, InterruptedException {
         // clean network from unwanted massages
-        for (ListenSocket listenSocket : this.all_nodes_listen_sockets){
-            listenSocket.stop_forwarding = true;
-        }
+//        for (ListenSocket listenSocket : this.all_nodes_listen_sockets){
+//            listenSocket.stop_forwarding = true;
+//        }
 
         // all listen socket is got to the point they stop forwarding the massages so the network is clean.
         boolean all_forward_closed = false;
@@ -163,7 +163,7 @@ public class ExManager {
                 }
             }
         }
-//        Thread.sleep(5000);
+//        Thread.sleep(1000);
 
 
         // close all listen sockets through sending socket massages

@@ -14,7 +14,7 @@ public class ListenSocket implements Runnable{
 
     public double[][] graph_matrix;
 
-    private int num_of_massage_to_send;
+
 
     public boolean isClose;
     public boolean stop_forwarding;
@@ -41,7 +41,7 @@ public class ListenSocket implements Runnable{
             Socket s = this.ss.accept();
 
             while (true) {
-
+//                System.out.println("socket: "+ this.ss.getLocalPort()+ " is here!");
                 ObjectInputStream objectInputStream = new ObjectInputStream(s.getInputStream());
                 Object object = objectInputStream.readObject();
                 if (object instanceof Pair) {
@@ -53,15 +53,23 @@ public class ListenSocket implements Runnable{
                     this.graph_matrix[id - 1] = packet_lv.getValue();
 
                     // sent to all my neighbors except v that sent the original packet
-                    while (this.all_send_sockets == null){}
-                    this.num_of_massage_to_send = this.all_send_sockets.size();
+                    while (this.all_send_sockets == null) {
+                        Thread.sleep(1);
+                    }
 
-                    if (!this.stop_forwarding) {
+                    if (!this.forwarding_is_closed) {
                         forward(packet_lv, ss.getLocalPort());
-                    } else {
+                    }
+                    if (check_full_matrix()){
                         this.forwarding_is_closed = true;
                     }
 
+//                    } else {
+//                        this.forwarding_is_closed = true;
+//                        packet_lv.setKey(-4);
+//                        forward(packet_lv, ss.getLocalPort());
+////                        System.out.println("Socket number: "+ this.ss.getLocalPort()+ " forwarding_is_closed is True");
+//                    }
                 } else {
                     s.close();
                     this.ss.close();
@@ -69,6 +77,14 @@ public class ListenSocket implements Runnable{
                     break;
                 }
             }
+
+//            }
+//            if(!this.ss.isClosed()) {
+//                s.close();
+//                this.ss.close();
+//                this.isClose = true;
+//            }
+
 
         } catch (IOException | ClassNotFoundException | InterruptedException e) {
             e.printStackTrace();
@@ -87,12 +103,11 @@ public class ListenSocket implements Runnable{
         while (this.all_send_sockets == null){}
         List<SendSocket> copy_all_send_sockets = new ArrayList<>(this.all_send_sockets);
         for (SendSocket send_socket : copy_all_send_sockets) {
-            if (send_socket.getSend_port() != sender_listen_port) {
-                if(!(send_socket.getSocket().isClosed())) {
+//            if (send_socket.getSend_port() != sender_listen_port) {
+//                if(!(send_socket.getSocket().isClosed())) {
                     send_socket.send(massage);
-                }
-            }
-            this.num_of_massage_to_send--;
+//                }
+//            }
         }
     }
 
@@ -108,6 +123,15 @@ public class ListenSocket implements Runnable{
             forward(close_your_forward, this.ss.getLocalPort());
         }
         this.forwarding_is_closed = true;
+    }
+
+    public boolean check_full_matrix(){
+        for (double[] inner_list : this.graph_matrix){
+            if (inner_list[0] == -2.0){
+                return false;
+            }
+        }
+        return true;
     }
 
 

@@ -29,7 +29,7 @@ public class SendSocket {
 
         try {
             sent_lock.lock();
-            if ((!(s.isClosed()))) {
+            if ((!(this.s.isClosed()))) {
                 ObjectOutputStream out = new ObjectOutputStream(this.s.getOutputStream());
                 out.writeObject(massage);
                 out.flush();

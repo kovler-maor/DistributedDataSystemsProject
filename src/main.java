@@ -4,8 +4,10 @@ import java.util.Scanner;
 
 public class main {
     public static void main(String[] args) throws FileNotFoundException {
-        String[] paths = {"//home//maork//Semester 5//Distributed Data Systems//Home Work//Distributed Data Systems Project//src//input_3.txt"
-                }; //enter the path to the files you want to run here.
+        String[] paths = {"C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\" +
+                "JavaTechnion\\DistributedDataSystemsProject\\src\\input_3" +
+                ".txt"
+                };
         for(String path: paths) {
             ExManager m = new ExManager(path);
             m.read_txt();
