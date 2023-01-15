@@ -102,6 +102,13 @@ public class ExManager {
             // call the run() function for all the nodes in G
             run_all_nodes();
 
+//            Thread.sleep(4000);
+//            for(Node node: this.list_of_nodes){
+//                if(!node.check_full_matrix()){
+//                    System.out.println("Node number: "+ node.get_node_id() +" doesn't have full matrix");
+//                }
+//            }
+
             // get here only if all nodes have build their graph matrix already
             // main program will wait here until latch count reaches zero
             latch.await();
@@ -154,16 +161,16 @@ public class ExManager {
 //        }
 
         // all listen socket is got to the point they stop forwarding the massages so the network is clean.
-        boolean all_forward_closed = false;
-        while (!all_forward_closed){
-            all_forward_closed = true;
-            for (ListenSocket listenSocket : this.all_nodes_listen_sockets){
-                if (!listenSocket.forwarding_is_closed){
-                    all_forward_closed = false;
-                }
-            }
-            Thread.sleep(1);
-        }
+//        boolean all_forward_closed = false;
+//        while (!all_forward_closed){
+//            all_forward_closed = true;
+//            for (ListenSocket listenSocket : this.all_nodes_listen_sockets){
+//                if (!listenSocket.forwarding_is_closed){
+//                    all_forward_closed = false;
+//                }
+//            }
+//            Thread.sleep(1);
+//        }
 //        Thread.sleep(1000);
 
 

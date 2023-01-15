@@ -26,6 +26,8 @@ public class Node implements Runnable {
 
     private Lock lock = new ReentrantLock();
 
+    public Lock matrix_lock = new ReentrantLock();
+
     public Node(int id) {
         this.id = id;
     }
@@ -72,6 +74,9 @@ public class Node implements Runnable {
          * link state routing algorithm from the prospective of one node v in graph G
          */
         try {
+            //send this node's lock to all my of my listen sockets
+            send_my_lock();
+
             // build all my send sockets
             build_all_send_sockets();
 
@@ -90,6 +95,8 @@ public class Node implements Runnable {
             // wait until i have my full graph_matrix
             while (!check_full_matrix()){Thread.sleep(100);}
 
+            System.out.println("Node number: "+ this.id+" have full matrix");
+
             // now we have all the data and can finish for node n.
             lock.lock();
             ExManager.latch.countDown();
@@ -97,6 +104,12 @@ public class Node implements Runnable {
 
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public void send_my_lock(){
+        for (ListenSocket listenSocket: this.all_listen_sockets){
+            listenSocket.matrix_lock = this.matrix_lock;
         }
     }
 

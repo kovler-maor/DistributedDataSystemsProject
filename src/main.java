@@ -4,25 +4,21 @@ import java.util.Scanner;
 
 public class main {
     public static void main(String[] args) throws FileNotFoundException {
-        String[] paths = {"C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\" +
-                "JavaTechnion\\DistributedDataSystemsProject\\src\\input_4" +
-                ".txt"
+        String[] paths = {"C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
+                "istributedDataSystemsProject\\src\\input_4.txt"
                 };
         for(String path: paths) {
             ExManager m = new ExManager(path);
             m.read_txt();
 
             int num_of_nodes = m.getNum_of_nodes();
-            int counter = 0;
+
             Scanner scanner = new Scanner(new File(path));
             while(scanner.hasNextLine()){
                 String line = scanner.nextLine();
 
                 if(line.contains("start")){
-                    counter++;
-                    if(counter == 3){
-                        int x = 6;
-                    }
+
                     m.start();
                     Node n = m.get_node(1 + (int)(Math.random() * num_of_nodes));
                     n.print_graph();

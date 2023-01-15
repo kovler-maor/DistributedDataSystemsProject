@@ -1,6 +1,8 @@
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ListenSocket implements Runnable{
 
@@ -13,6 +15,8 @@ public class ListenSocket implements Runnable{
     public ArrayList<SendSocket> all_send_sockets;
 
     public double[][] graph_matrix;
+
+    public Lock matrix_lock;
 
 
 
@@ -43,6 +47,7 @@ public class ListenSocket implements Runnable{
             while (true) {
 //                System.out.println("socket: "+ this.ss.getLocalPort()+ " is here!");
                 ObjectInputStream objectInputStream = new ObjectInputStream(s.getInputStream());
+
                 Object object = objectInputStream.readObject();
                 if (object instanceof Pair) {
                     // get the packet
@@ -50,7 +55,9 @@ public class ListenSocket implements Runnable{
                     int id = packet_lv.getKey();
 
                     // update matrix
+//                    this.matrix_lock.lock();
                     this.graph_matrix[id - 1] = packet_lv.getValue();
+//                    this.matrix_lock.unlock();
 
                     // sent to all my neighbors except v that sent the original packet
                     while (this.all_send_sockets == null) {
@@ -103,11 +110,11 @@ public class ListenSocket implements Runnable{
         while (this.all_send_sockets == null){}
         List<SendSocket> copy_all_send_sockets = new ArrayList<>(this.all_send_sockets);
         for (SendSocket send_socket : copy_all_send_sockets) {
-//            if (send_socket.getSend_port() != sender_listen_port) {
+            if (send_socket.getSend_port() != sender_listen_port) {
 //                if(!(send_socket.getSocket().isClosed())) {
                     send_socket.send(massage);
 //                }
-//            }
+            }
         }
     }
 

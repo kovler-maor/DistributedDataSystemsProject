@@ -43,10 +43,18 @@ public class SendSocket {
 
 
     public void send_close_massage() throws IOException {
-        Object close_massage = 0;
-        ObjectOutputStream out = new ObjectOutputStream(this.s.getOutputStream());
-        out.writeObject(close_massage);
-        out.flush();
+        try {
+            sent_lock.lock();
+            Object close_massage = 0;
+            ObjectOutputStream out = new ObjectOutputStream(this.s.getOutputStream());
+            out.writeObject(close_massage);
+            out.flush();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            sent_lock.unlock();
+        }
     }
 
     public int getSend_port() {
