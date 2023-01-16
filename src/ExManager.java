@@ -7,7 +7,7 @@ public class ExManager {
     public ArrayList<Node> list_of_nodes;
     public static CountDownLatch latch;
     private ArrayList<ListenSocket> all_nodes_listen_sockets = new ArrayList<ListenSocket>();
-
+    public static boolean network_is_closing;
 
     public ExManager(String path) {
         this.path = path;
@@ -66,9 +66,7 @@ public class ExManager {
     }
 
 
-
     public void init_ex_manager() {
-
         try {
             for (Node node : this.list_of_nodes) {
                 node.init_empty_graph_matrix();
@@ -93,6 +91,9 @@ public class ExManager {
          * This function starting the link state routing algorithm for all the nodes in the the graph
          */
 
+        // the network is working now
+        network_is_closing = false;
+
         try {
             // empty matrix + open listen sockets + run them
             init_ex_manager();
@@ -101,13 +102,6 @@ public class ExManager {
 
             // call the run() function for all the nodes in G
             run_all_nodes();
-
-//            Thread.sleep(4000);
-//            for(Node node: this.list_of_nodes){
-//                if(!node.check_full_matrix()){
-//                    System.out.println("Node number: "+ node.get_node_id() +" doesn't have full matrix");
-//                }
-//            }
 
             // get here only if all nodes have build their graph matrix already
             // main program will wait here until latch count reaches zero
@@ -126,6 +120,7 @@ public class ExManager {
         }
 
     }
+
 
     public void wait_until_all_socket_closed(){
         boolean all_closed = false;
@@ -154,25 +149,11 @@ public class ExManager {
         }
     }
 
+
     public void close_all_listen_sockets() throws IOException, InterruptedException {
-        // clean network from unwanted massages
-//        for (ListenSocket listenSocket : this.all_nodes_listen_sockets){
-//            listenSocket.stop_forwarding = true;
-//        }
 
-        // all listen socket is got to the point they stop forwarding the massages so the network is clean.
-//        boolean all_forward_closed = false;
-//        while (!all_forward_closed){
-//            all_forward_closed = true;
-//            for (ListenSocket listenSocket : this.all_nodes_listen_sockets){
-//                if (!listenSocket.forwarding_is_closed){
-//                    all_forward_closed = false;
-//                }
-//            }
-//            Thread.sleep(1);
-//        }
-//        Thread.sleep(1000);
-
+        // the network should stop working now before closing
+        network_is_closing = true;
 
         // close all listen sockets through sending socket massages
         for (Node node : this.list_of_nodes){

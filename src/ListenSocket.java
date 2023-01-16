@@ -2,7 +2,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+
 
 public class ListenSocket implements Runnable{
 
@@ -18,17 +18,19 @@ public class ListenSocket implements Runnable{
 
     public Lock matrix_lock;
 
+    private ArrayList<Integer> ids_of_nodes_who_sent;
 
+    public ObjectInputStream objectInputStream;
 
     public boolean isClose;
+
     public boolean stop_forwarding;
+
     public boolean forwarding_is_closed;
 
 
-
     public ListenSocket(int listen_port, ArrayList<Pair<Integer,
-            ArrayList<Object>>> neighbors, int number_of_nodes,
-                        double[][] graph_matrix) throws IOException {
+            ArrayList<Object>>> neighbors, int number_of_nodes, double[][] graph_matrix) throws IOException {
         this.ss = new ServerSocket(listen_port);
         this.neighbors = neighbors;
         this.number_of_nodes = number_of_nodes;
@@ -36,6 +38,7 @@ public class ListenSocket implements Runnable{
         this.isClose = false;
         this.stop_forwarding = false;
         this.forwarding_is_closed = false;
+        this.ids_of_nodes_who_sent = new ArrayList<>();
     }
 
     @Override
@@ -45,25 +48,31 @@ public class ListenSocket implements Runnable{
             Socket s = this.ss.accept();
 
             while (true) {
-//                System.out.println("socket: "+ this.ss.getLocalPort()+ " is here!");
-                ObjectInputStream objectInputStream = new ObjectInputStream(s.getInputStream());
+                this.objectInputStream = new ObjectInputStream(s.getInputStream());
 
                 Object object = objectInputStream.readObject();
                 if (object instanceof Pair) {
+
                     // get the packet
                     Pair<Integer, double[]> packet_lv = (Pair<Integer, double[]>) object;
                     int id = packet_lv.getKey();
 
-                    // update matrix
-//                    this.matrix_lock.lock();
-                    this.graph_matrix[id - 1] = packet_lv.getValue();
-//                    this.matrix_lock.unlock();
+                    // continue if i saw that packet already
+                    if(this.ids_of_nodes_who_sent.contains(id)){
+                        continue;
+                    }
+                    this.ids_of_nodes_who_sent.add(id);
 
-                    // sent to all my neighbors except v that sent the original packet
+                    // update matrix
+                    this.graph_matrix[id - 1] = packet_lv.getValue();
+
+                    // wait until all_send_sockets initialised
                     while (this.all_send_sockets == null) {
                         Thread.sleep(1);
                     }
 
+                    // sent to all my neighbors except v that sent the original packet
+                    // sent stop the massage after the one that makes my matrix full
                     if (!this.forwarding_is_closed) {
                         forward(packet_lv, ss.getLocalPort());
                     }
@@ -71,12 +80,7 @@ public class ListenSocket implements Runnable{
                         this.forwarding_is_closed = true;
                     }
 
-//                    } else {
-//                        this.forwarding_is_closed = true;
-//                        packet_lv.setKey(-4);
-//                        forward(packet_lv, ss.getLocalPort());
-////                        System.out.println("Socket number: "+ this.ss.getLocalPort()+ " forwarding_is_closed is True");
-//                    }
+                // if i got here that means that the massage that i got is "close massage"
                 } else {
                     s.close();
                     this.ss.close();
@@ -85,14 +89,6 @@ public class ListenSocket implements Runnable{
                 }
             }
 
-//            }
-//            if(!this.ss.isClosed()) {
-//                s.close();
-//                this.ss.close();
-//                this.isClose = true;
-//            }
-
-
         } catch (IOException | ClassNotFoundException | InterruptedException e) {
             e.printStackTrace();
         }
@@ -100,6 +96,7 @@ public class ListenSocket implements Runnable{
 
 
     public void forward(Pair<Integer, double[]> massage, int sender_send_port) throws IOException, InterruptedException {
+        // find out the sender's listen port
         int sender_listen_port = 0;
         for(Pair<Integer, ArrayList<Object>> neighbor : this.neighbors) {
             if(neighbor.getValue().get(2).equals(sender_send_port)){
@@ -108,15 +105,16 @@ public class ListenSocket implements Runnable{
         }
 
         while (this.all_send_sockets == null){}
+        // forward to all that are not the sender
         List<SendSocket> copy_all_send_sockets = new ArrayList<>(this.all_send_sockets);
         for (SendSocket send_socket : copy_all_send_sockets) {
             if (send_socket.getSend_port() != sender_listen_port) {
-//                if(!(send_socket.getSocket().isClosed())) {
                     send_socket.send(massage);
-//                }
+
             }
         }
     }
+
 
     public boolean check_full_matrix(){
         for (double[] inner_list : this.graph_matrix){
@@ -126,6 +124,5 @@ public class ListenSocket implements Runnable{
         }
         return true;
     }
-
 
 }

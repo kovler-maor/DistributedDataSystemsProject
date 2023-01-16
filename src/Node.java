@@ -28,6 +28,7 @@ public class Node implements Runnable {
 
     public Lock matrix_lock = new ReentrantLock();
 
+
     public Node(int id) {
         this.id = id;
     }
@@ -95,8 +96,6 @@ public class Node implements Runnable {
             // wait until i have my full graph_matrix
             while (!check_full_matrix()){Thread.sleep(100);}
 
-            System.out.println("Node number: "+ this.id+" have full matrix");
-
             // now we have all the data and can finish for node n.
             lock.lock();
             ExManager.latch.countDown();
@@ -107,11 +106,13 @@ public class Node implements Runnable {
         }
     }
 
+
     public void send_my_lock(){
         for (ListenSocket listenSocket: this.all_listen_sockets){
             listenSocket.matrix_lock = this.matrix_lock;
         }
     }
+
 
     public void init_empty_graph_matrix(){
         this.graph_matrix = new double[this.number_of_nodes][this.number_of_nodes];
@@ -122,6 +123,7 @@ public class Node implements Runnable {
         }
 
     }
+
 
     public void clean_graph_matrix(){
         for (int i = 0; i < this.graph_matrix.length; i++) {
@@ -188,13 +190,7 @@ public class Node implements Runnable {
 
     public ArrayList<ListenSocket> build_all_listen_sockets() throws IOException {
         /**
-         * this function will build all my in sockets and listen to all of them
-         * it will stop once my node have gotten all the data he needs
-         * which means stop when the size of "this.other_lvs == (n-1)
-         * the function also sends my_lv, using the "build_sockets_and_send_pair_to_all" function
-         * it needs to be only after a node set up all of his in sockets so that
-         * the code will not get stuck on all node just sending and waiting for connection
-         *** "my_lv_massage" should be send just once in the first iteration
+         * this function will build all my in listen sockets and save the to an arraylist
          */
 
         // build a list of all the in ports i should listen to
@@ -218,9 +214,9 @@ public class Node implements Runnable {
         return this.all_listen_sockets;
     }
 
+
     public void build_all_send_sockets() throws IOException {
         /**
-         * @Pair<Integer, double[]> my_lv_massage
          * this function will build all my out sockets
          */
 
@@ -288,7 +284,6 @@ public class Node implements Runnable {
             }
         }
     }
-
 
 
 }

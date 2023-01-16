@@ -4,8 +4,49 @@ import java.util.Scanner;
 
 public class main {
     public static void main(String[] args) throws FileNotFoundException {
-        String[] paths = {"C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
-                "istributedDataSystemsProject\\src\\input_4.txt"
+        String[] paths = {
+                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
+                        "istributedDataSystemsProject\\src\\input_1.txt",
+                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
+                        "istributedDataSystemsProject\\src\\input_2.txt",
+                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
+                        "istributedDataSystemsProject\\src\\input_3.txt",
+                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
+                        "istributedDataSystemsProject\\src\\input_4.txt",
+                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
+                        "istributedDataSystemsProject\\src\\input_5.txt",
+                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
+                        "istributedDataSystemsProject\\src\\input_1.txt",
+                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
+                        "istributedDataSystemsProject\\src\\input_2.txt",
+                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
+                        "istributedDataSystemsProject\\src\\input_3.txt",
+                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
+                        "istributedDataSystemsProject\\src\\input_4.txt",
+                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
+                        "istributedDataSystemsProject\\src\\input_5.txt",
+                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
+                        "istributedDataSystemsProject\\src\\input_1.txt",
+                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
+                        "istributedDataSystemsProject\\src\\input_2.txt",
+                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
+                        "istributedDataSystemsProject\\src\\input_3.txt",
+                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
+                        "istributedDataSystemsProject\\src\\input_4.txt",
+                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
+                        "istributedDataSystemsProject\\src\\input_5.txt",
+                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
+                        "istributedDataSystemsProject\\src\\input_1.txt",
+                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
+                        "istributedDataSystemsProject\\src\\input_2.txt",
+                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
+                        "istributedDataSystemsProject\\src\\input_3.txt",
+                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
+                        "istributedDataSystemsProject\\src\\input_4.txt",
+                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
+                        "istributedDataSystemsProject\\src\\input_4.txt",
+                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
+                        "istributedDataSystemsProject\\src\\input_5.txt"
                 };
         for(String path: paths) {
             ExManager m = new ExManager(path);

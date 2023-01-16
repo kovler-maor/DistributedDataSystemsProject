@@ -13,8 +13,6 @@ public class SendSocket {
     private static final Lock sent_lock = new ReentrantLock();
 
 
-
-
     public SendSocket(int port){
         this.send_port = port;
         try {
@@ -27,17 +25,19 @@ public class SendSocket {
 
     public void send(Pair<Integer, double[]> massage){
 
-        try {
-            sent_lock.lock();
-            if ((!(this.s.isClosed()))) {
-                ObjectOutputStream out = new ObjectOutputStream(this.s.getOutputStream());
-                out.writeObject(massage);
-                out.flush();
+        if (!ExManager.network_is_closing) {
+            try {
+                sent_lock.lock();
+                if ((!(this.s.isClosed()))) {
+                    ObjectOutputStream out = new ObjectOutputStream(this.s.getOutputStream());
+                    out.writeObject(massage);
+                    out.flush();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                sent_lock.unlock();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            sent_lock.unlock();
         }
     }
 
@@ -57,14 +57,9 @@ public class SendSocket {
         }
     }
 
+
     public int getSend_port() {
         return send_port;
     }
-
-
-    public Socket getSocket() {
-        return s;
-    }
-
 
 }
