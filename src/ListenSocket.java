@@ -82,6 +82,7 @@ public class ListenSocket implements Runnable{
 
                 // if i got here that means that the massage that i got is "close massage"
                 } else {
+                    this.objectInputStream.close();
                     s.close();
                     this.ss.close();
                     this.isClose = true;

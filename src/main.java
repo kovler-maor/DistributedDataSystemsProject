@@ -14,38 +14,6 @@ public class main {
                 "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
                         "istributedDataSystemsProject\\src\\input_4.txt",
                 "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
-                        "istributedDataSystemsProject\\src\\input_5.txt",
-                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
-                        "istributedDataSystemsProject\\src\\input_1.txt",
-                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
-                        "istributedDataSystemsProject\\src\\input_2.txt",
-                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
-                        "istributedDataSystemsProject\\src\\input_3.txt",
-                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
-                        "istributedDataSystemsProject\\src\\input_4.txt",
-                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
-                        "istributedDataSystemsProject\\src\\input_5.txt",
-                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
-                        "istributedDataSystemsProject\\src\\input_1.txt",
-                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
-                        "istributedDataSystemsProject\\src\\input_2.txt",
-                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
-                        "istributedDataSystemsProject\\src\\input_3.txt",
-                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
-                        "istributedDataSystemsProject\\src\\input_4.txt",
-                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
-                        "istributedDataSystemsProject\\src\\input_5.txt",
-                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
-                        "istributedDataSystemsProject\\src\\input_1.txt",
-                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
-                        "istributedDataSystemsProject\\src\\input_2.txt",
-                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
-                        "istributedDataSystemsProject\\src\\input_3.txt",
-                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
-                        "istributedDataSystemsProject\\src\\input_4.txt",
-                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
-                        "istributedDataSystemsProject\\src\\input_4.txt",
-                "C:\\Users\\morzo\\OneDrive\\Documents\\Java technion\\JavaTechnion\\D" +
                         "istributedDataSystemsProject\\src\\input_5.txt"
                 };
         for(String path: paths) {

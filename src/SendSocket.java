@@ -49,6 +49,7 @@ public class SendSocket {
             ObjectOutputStream out = new ObjectOutputStream(this.s.getOutputStream());
             out.writeObject(close_massage);
             out.flush();
+            out.close();
 
         } catch (Exception e) {
             e.printStackTrace();
